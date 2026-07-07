@@ -18,14 +18,16 @@ class Settings(BaseSettings):
 
     anthropic_api_key: Optional[str] = None
     # Claude model for narrative flavor text (thinking disabled in ai_client —
-    # this is short generation, not a reasoning task). Configurable: set to
-    # claude-haiku-4-5 for the cheapest tier, or claude-opus-4-8 for the
-    # richest prose.
-    anthropic_model: str = "claude-sonnet-5"
-    # Server-side timeout, comfortably under the client's 5s hard abort so a
-    # slow upstream call fails clean (structured error) before the client
-    # would've killed the connection anyway.
-    anthropic_timeout_seconds: float = 4.0
+    # this is short generation, not a reasoning task). Default is Haiku: it's
+    # the fastest tier (~3.8s warm), which fits the game's tight event budget,
+    # and the cheapest. Set claude-sonnet-5 / claude-opus-4-8 for richer prose,
+    # but note they run ~6s and will usually miss the 5s budget (-> fallback).
+    anthropic_model: str = "claude-haiku-4-5"
+    # Server-side timeout, kept just under the client's 5s hard abort so a slow
+    # upstream call fails clean (structured error) before the client would've
+    # killed the connection. Warm Haiku calls (~3.8s) fit inside this; slower
+    # ones fall back — which is the intended graceful degradation.
+    anthropic_timeout_seconds: float = 4.8
     # Comma-separated list of allowed origins for local frontend dev.
     cors_allow_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     # Per-IP rate limit (requests/minute) on the billed generate endpoint

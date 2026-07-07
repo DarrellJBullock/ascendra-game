@@ -39,7 +39,7 @@ Backend (FastAPI, stateless) ──outbound HTTPS──> Anthropic API
 | Variable | Consumed by | Points at | Notes |
 |---|---|---|---|
 | `ANTHROPIC_API_KEY` | backend | Anthropic API | The one real secret. Leave unset to run the built-in stub (schema-valid canned response) — safe for local dev/demo, no account needed. |
-| `ANTHROPIC_MODEL` | backend | — | Defaults to `claude-sonnet-5`. Set `claude-haiku-4-5` (cheapest) or `claude-opus-4-8` (richest). |
+| `ANTHROPIC_MODEL` | backend | — | Defaults to `claude-haiku-4-5` (fastest/cheapest — fits the 5s event budget). Set `claude-sonnet-5` / `claude-opus-4-8` for richer prose (slower, usually falls back). |
 | `ANTHROPIC_TIMEOUT_SECONDS` | backend | — | Server-side call timeout, kept under the frontend's 5s hard abort. |
 | `CORS_ALLOW_ORIGINS` | backend | frontend's real origin | **Must be updated at deploy time** to the actual deployed frontend URL (e.g. `https://ascendra.vercel.app`). Comma-separated for multiple origins (e.g. preview + prod). |
 | `USE_STUB` | backend | — | Force `true`/`false` to override auto-detection; leave blank for auto (stub only when no key). |
