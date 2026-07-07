@@ -18,6 +18,7 @@ import { isLowRunway } from "@/components/dashboard/formatters";
 import { EventCard } from "@/components/event/EventCard";
 import { EndScreen } from "@/components/endstates/EndScreen";
 import FundraisingPanel from "@/components/fundraising/FundraisingPanel";
+import ProductPanel from "@/components/product/ProductPanel";
 import { Wordmark } from "@/components/brand/Wordmark";
 
 const SUCCESS_VALUATION = 1_000_000;
@@ -155,10 +156,11 @@ export default function PlayPage() {
         <MetricsPanel metrics={state.metrics} previous={previous} />
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-          <div className="lg:col-span-2">
+          <div className="flex flex-col gap-5 lg:col-span-2">
             <RevenueChart turnHistory={state.turnHistory} currentMrr={state.metrics.mrr} />
           </div>
-          <div>
+          <div className="flex flex-col gap-5">
+            <ProductPanel />
             <FundraisingPanel />
           </div>
         </div>

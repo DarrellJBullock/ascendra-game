@@ -108,6 +108,22 @@ export interface FundraisingOffer {
   status: "pending" | "accepted" | "declined";
 }
 
+/** Phase 2 — Product Management. The player's weekly product "focus": grow the
+ * product (ship), pay down debt (refactor), or cheaply maintain (fix bugs).
+ * Union so more actions can be added later without a shape change. */
+export type ProductActionType = "ship_feature" | "refactor" | "fix_bugs";
+
+/** One product action taken in a given week (at most one per week). Records the
+ * applied deltas so the UI can show "this week you…" without recomputing. */
+export interface ProductActionRecord {
+  id: string;
+  week: number;
+  action: ProductActionType;
+  cashDelta: number;
+  technicalDebtDelta: number;
+  customerCountDelta: number;
+}
+
 /**
  * The output of the ONE stochastic step (EV-1's `rollEngineeringEvent`)
  * before narrative/choices exist for it. `advanceWeek` (TE-7) sets this when
@@ -134,6 +150,12 @@ export interface GameState {
   // full log kept for the session (small, session-only data)
   eventLog: EventLogRecord[];
   fundraisingOffers: FundraisingOffer[];
+  /**
+   * Phase 2 — Product Management. Append-only log of product actions (at most
+   * one per week). Optional so persisted saves from before this feature still
+   * deserialize; read sites default to `[]` (see product.ts / factory.ts).
+   */
+  productActions?: ProductActionRecord[];
   gameStatus: "in_progress" | "bankrupt" | "success";
   /**
    * Non-null between "an Engineering event rolled this week" and "the player
