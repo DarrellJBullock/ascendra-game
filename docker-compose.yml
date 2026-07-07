@@ -1,0 +1,43 @@
+# Ascendra v1 — full-stack local/deploy-ready compose.
+#
+# Two stateless services (see company-docs/architecture.md Section 2 & 7):
+#   - backend: FastAPI AI-event proxy. No DB/Redis/volumes. One secret:
+#     OPENAI_API_KEY (optional — auto-falls-back to a stub response when unset).
+#   - frontend: Next.js app, all game state client-side (browser localStorage).
+#
+# Env wiring:
+#   backend.CORS_ALLOW_ORIGINS  -> must list the frontend's origin(s)
+#   frontend build arg NEXT_PUBLIC_AI_PROXY_URL -> must point at the backend's
+#     origin as reachable from the PLAYER'S BROWSER (not the Docker network
+#     name — the browser can't resolve "backend"). For local compose use
+#     http://localhost:8000 (published backend port).
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      OPENAI_TIMEOUT_SECONDS: ${OPENAI_TIMEOUT_SECONDS:-4.0}
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:3000}
+      USE_STUB: ${USE_STUB:-}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/v1/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_AI_PROXY_URL: ${NEXT_PUBLIC_AI_PROXY_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend

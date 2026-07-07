@@ -1,0 +1,369 @@
+// CT-1 — Deterministic fallback template bank for the Engineering event
+// category (architecture.md Section 5, "Fallback — exact trigger conditions").
+//
+// This is genuine substitute content, not a degraded experience: it's what
+// players see whenever the AI proxy errors, times out (>5s), or returns a
+// malformed response. Shape matches the AI response contract exactly
+// (`narrative` + 2-3 `choices`, each with label/description/consequences) so
+// downstream `applyEventChoice` code never needs to branch on `source`.
+//
+// Keyed by (Industry x SeverityBand), >=2 narrative variants each.
+// Consequence signs/magnitudes are directionally reasonable placeholders —
+// final magnitudes are tuned alongside TE-9/EV-3, not here.
+
+import type { EventChoice, Industry, SeverityBand } from "./types";
+
+export interface FallbackEventTemplate {
+  narrative: string;
+  choices: Omit<EventChoice, "id">[];
+}
+
+type TemplateBank = Record<Industry, Record<SeverityBand, FallbackEventTemplate[]>>;
+
+const FALLBACK_EVENT_TEMPLATES: TemplateBank = {
+  AI: {
+    low: [
+      {
+        narrative:
+          "A background model-retraining job silently failed overnight, leaving your recommendation engine serving slightly stale results. Nobody's complained yet, but it's been three days.",
+        choices: [
+          {
+            label: "Patch the cron job and move on",
+            description: "Quick fix to restart retraining; the underlying scheduling fragility remains.",
+            consequences: { cashDelta: -500, technicalDebtDelta: 3, customerCountDelta: 0 },
+          },
+          {
+            label: "Rebuild the pipeline with proper monitoring",
+            description: "Costs an engineer's week and some cash, but the job can't silently fail again.",
+            consequences: { cashDelta: -3000, technicalDebtDelta: -6, customerCountDelta: 0 },
+          },
+        ],
+      },
+      {
+        narrative:
+          "One of your junior engineers hardcoded an API key into a public GitHub commit while wiring up a new inference endpoint. It's already been flagged by a bot, but no real exploitation yet.",
+        choices: [
+          {
+            label: "Rotate the key and scrub the commit history",
+            description: "Fast, cheap containment; the sloppy commit habits behind it go unaddressed.",
+            consequences: { cashDelta: -300, technicalDebtDelta: 2, customerCountDelta: 0 },
+          },
+          {
+            label: "Rotate the key and roll out a pre-commit secrets scanner",
+            description: "A bit more setup time now, but this class of leak stops recurring.",
+            consequences: { cashDelta: -1200, technicalDebtDelta: -4, customerCountDelta: 0 },
+          },
+        ],
+      },
+    ],
+    moderate: [
+      {
+        narrative:
+          "Your inference service started returning noticeably degraded outputs after a dependency upgrade — accuracy is down and a handful of customers have noticed weird responses in support tickets.",
+        choices: [
+          {
+            label: "Roll back the dependency and ship a workaround",
+            description: "Restores quality quickly but leaves the upgrade (and whatever it fixed) undone, piling debt.",
+            consequences: { cashDelta: -2000, technicalDebtDelta: 8, customerCountDelta: -2 },
+          },
+          {
+            label: "Bisect the regression and fix it properly",
+            description: "Takes real engineering time and cash, but the model quality issue is actually resolved.",
+            consequences: { cashDelta: -9000, technicalDebtDelta: -10, customerCountDelta: 0 },
+          },
+          {
+            label: "Do nothing this week, monitor it",
+            description: "Free, but customers keep noticing and a few may already be souring on the product.",
+            consequences: { cashDelta: 0, technicalDebtDelta: 5, customerCountDelta: -6 },
+          },
+        ],
+      },
+      {
+        narrative:
+          "Your GPU inference costs quietly tripled this month because nobody set autoscaling limits — finance flagged it, and the root cause is a training job that's been left running unbounded.",
+        choices: [
+          {
+            label: "Kill the runaway job and cap spend manually",
+            description: "Stops the bleeding today; without real autoscaling policy this will happen again.",
+            consequences: { cashDelta: -1000, technicalDebtDelta: 6, customerCountDelta: 0 },
+          },
+          {
+            label: "Build proper autoscaling + budget alerts",
+            description: "A real engineering investment that prevents repeat cost blowups going forward.",
+            consequences: { cashDelta: -7000, technicalDebtDelta: -9, customerCountDelta: 0 },
+          },
+        ],
+      },
+    ],
+    high: [
+      {
+        narrative:
+          "Your core model-serving cluster crashed under load during a viral spike, and it's been down for six hours. Customers are posting about it, and your on-call engineer is exhausted trying to bring it back.",
+        choices: [
+          {
+            label: "Emergency patch to restore service on old infra",
+            description: "Gets you back online fast and cheap, but the brittle infra that caused this stays exactly as brittle.",
+            consequences: { cashDelta: -4000, technicalDebtDelta: 14, customerCountDelta: -20 },
+          },
+          {
+            label: "Full incident response: re-architect serving layer under fire",
+            description: "Expensive and slow to ship, but it genuinely fixes the scaling weakness that caused the outage.",
+            consequences: { cashDelta: -25000, technicalDebtDelta: -20, customerCountDelta: -8 },
+          },
+        ],
+      },
+      {
+        narrative:
+          "A prompt-injection exploit let an attacker extract other users' data through your AI assistant feature. It's already circulating on social media, and press has started asking questions.",
+        choices: [
+          {
+            label: "Disable the feature and issue a quiet statement",
+            description: "Contains the immediate exposure cheaply, but doesn't fix the underlying validation gaps.",
+            consequences: { cashDelta: -6000, technicalDebtDelta: 10, customerCountDelta: -30 },
+          },
+          {
+            label: "Full security audit and hardened input validation rollout",
+            description: "Costly and slow, but closes the vulnerability class and rebuilds some trust.",
+            consequences: { cashDelta: -40000, technicalDebtDelta: -25, customerCountDelta: -15 },
+          },
+        ],
+      },
+    ],
+  },
+  Fintech: {
+    low: [
+      {
+        narrative:
+          "A rounding bug in your interest-calculation module has been overcharging a small number of accounts by fractions of a cent per transaction. Nobody's noticed, but it's technically a compliance issue.",
+        choices: [
+          {
+            label: "Patch the rounding and quietly refund affected accounts",
+            description: "Cheap, contained fix; the broader lack of financial-calc test coverage remains.",
+            consequences: { cashDelta: -800, technicalDebtDelta: 2, customerCountDelta: 0 },
+          },
+          {
+            label: "Fix it and add a full reconciliation test suite",
+            description: "More upfront cost, but this category of billing bug becomes far less likely to recur.",
+            consequences: { cashDelta: -3500, technicalDebtDelta: -6, customerCountDelta: 0 },
+          },
+        ],
+      },
+      {
+        narrative:
+          "Your staging and production configs drifted apart again, and a test transaction briefly hit a live payment processor sandbox instead of prod. No real money moved, but it easily could have.",
+        choices: [
+          {
+            label: "Manually resync configs this time",
+            description: "Fixes today's drift; the same mistake can happen again next deploy.",
+            consequences: { cashDelta: -400, technicalDebtDelta: 3, customerCountDelta: 0 },
+          },
+          {
+            label: "Introduce config-as-code with environment parity checks",
+            description: "Takes a sprint, but eliminates this whole category of environment drift.",
+            consequences: { cashDelta: -2500, technicalDebtDelta: -5, customerCountDelta: 0 },
+          },
+        ],
+      },
+    ],
+    moderate: [
+      {
+        narrative:
+          "Your fraud-detection model started flagging a wave of legitimate transactions as fraudulent, locking out real customers from their accounts right before payday.",
+        choices: [
+          {
+            label: "Temporarily loosen fraud thresholds",
+            description: "Unblocks customers fast but raises real fraud exposure and leaves the model untuned.",
+            consequences: { cashDelta: -1500, technicalDebtDelta: 7, customerCountDelta: -3 },
+          },
+          {
+            label: "Retrain the model on recent transaction patterns",
+            description: "Slower and costs real engineering time, but properly fixes the false-positive spike.",
+            consequences: { cashDelta: -8000, technicalDebtDelta: -8, customerCountDelta: 0 },
+          },
+          {
+            label: "Ignore it, let support handle the tickets",
+            description: "No immediate spend, but frustrated locked-out customers are already churning.",
+            consequences: { cashDelta: 0, technicalDebtDelta: 4, customerCountDelta: -10 },
+          },
+        ],
+      },
+      {
+        narrative:
+          "A third-party KYC verification API you depend on has been silently timing out for 15% of new signups for the past week, quietly killing your onboarding funnel.",
+        choices: [
+          {
+            label: "Add a retry wrapper around the flaky API",
+            description: "Band-aids the symptom cheaply; the brittle single-vendor dependency remains.",
+            consequences: { cashDelta: -1200, technicalDebtDelta: 6, customerCountDelta: -2 },
+          },
+          {
+            label: "Integrate a second KYC provider with automatic failover",
+            description: "Real integration work and cost, but onboarding becomes resilient to this vendor's outages.",
+            consequences: { cashDelta: -9000, technicalDebtDelta: -9, customerCountDelta: 3 },
+          },
+        ],
+      },
+    ],
+    high: [
+      {
+        narrative:
+          "A ledger reconciliation bug caused customer balances to briefly display incorrect figures across the platform. Regulators have been notified automatically per your compliance obligations, and customers are panicking.",
+        choices: [
+          {
+            label: "Emergency freeze + manual reconciliation",
+            description: "Stops the bleeding fast and cheaply, but the underlying ledger fragility isn't addressed and regulators will be watching closely.",
+            consequences: { cashDelta: -8000, technicalDebtDelta: 15, customerCountDelta: -25 },
+          },
+          {
+            label: "Full ledger audit and rebuild of the reconciliation engine",
+            description: "Very expensive and slow, but genuinely resolves the root cause and satisfies regulatory scrutiny.",
+            consequences: { cashDelta: -50000, technicalDebtDelta: -22, customerCountDelta: -10 },
+          },
+        ],
+      },
+      {
+        narrative:
+          "An unpatched dependency in your payments stack was exploited, exposing partial card-transaction metadata for a subset of users. This is now a reportable breach.",
+        choices: [
+          {
+            label: "Patch the vulnerability and notify only affected users",
+            description: "Minimizes cost and scope, but a broader security review is deferred, leaving debt high.",
+            consequences: { cashDelta: -10000, technicalDebtDelta: 12, customerCountDelta: -35 },
+          },
+          {
+            label: "Full breach disclosure, third-party audit, and stack hardening",
+            description: "Costly and slow, but rebuilds trust and materially reduces future breach risk.",
+            consequences: { cashDelta: -60000, technicalDebtDelta: -28, customerCountDelta: -18 },
+          },
+        ],
+      },
+    ],
+  },
+  Ecommerce: {
+    low: [
+      {
+        narrative:
+          "Your inventory sync job has been double-counting returned items for a week, showing a handful of out-of-stock products as available. A few orders came in for items you don't actually have.",
+        choices: [
+          {
+            label: "Manually correct the affected SKUs",
+            description: "Quick and cheap, but the sync logic that caused this stays broken.",
+            consequences: { cashDelta: -400, technicalDebtDelta: 3, customerCountDelta: 0 },
+          },
+          {
+            label: "Fix the sync job and add stock-level assertions",
+            description: "A bit more work, but this exact bug can't silently recur.",
+            consequences: { cashDelta: -2200, technicalDebtDelta: -5, customerCountDelta: 0 },
+          },
+        ],
+      },
+      {
+        narrative:
+          "A checkout page CSS regression is making the 'apply discount code' button overlap the 'place order' button on mobile — a few customers have complained, and it looks unprofessional.",
+        choices: [
+          {
+            label: "Ship a quick CSS override",
+            description: "Fast, cheap fix; the fragile CSS structure behind the bug isn't cleaned up.",
+            consequences: { cashDelta: -200, technicalDebtDelta: 2, customerCountDelta: 0 },
+          },
+          {
+            label: "Refactor the checkout layout with proper responsive tests",
+            description: "Costs more time but meaningfully reduces future checkout-layout regressions.",
+            consequences: { cashDelta: -1800, technicalDebtDelta: -4, customerCountDelta: 1 },
+          },
+        ],
+      },
+    ],
+    moderate: [
+      {
+        narrative:
+          "Your recommendation widget on product pages started recommending discontinued items, tanking click-through and confusing customers mid-purchase.",
+        choices: [
+          {
+            label: "Disable the widget for now",
+            description: "Removes the confusion immediately but loses whatever upsell value it was providing, and the stale data problem remains unfixed.",
+            consequences: { cashDelta: -300, technicalDebtDelta: 5, customerCountDelta: -2 },
+          },
+          {
+            label: "Fix the data feed and re-index the catalog",
+            description: "Takes real engineering time and cash, but restores a working, trustworthy recommendation feature.",
+            consequences: { cashDelta: -6000, technicalDebtDelta: -8, customerCountDelta: 2 },
+          },
+        ],
+      },
+      {
+        narrative:
+          "Your shipping-rate calculator started returning wildly wrong rates for international orders after a carrier API change, either scaring off customers with huge quotes or silently undercharging you.",
+        choices: [
+          {
+            label: "Hardcode a flat international rate as a stopgap",
+            description: "Stops the immediate customer confusion cheaply, but you're eating margin risk and the integration stays broken.",
+            consequences: { cashDelta: -1500, technicalDebtDelta: 7, customerCountDelta: -3 },
+          },
+          {
+            label: "Properly re-integrate with the carrier's updated API",
+            description: "Slower and more expensive, but rates become accurate again and the integration is solid going forward.",
+            consequences: { cashDelta: -7500, technicalDebtDelta: -9, customerCountDelta: 0 },
+          },
+          {
+            label: "Ignore it, most orders are domestic anyway",
+            description: "No immediate cost, but international customers keep hitting bad rates and abandoning carts.",
+            consequences: { cashDelta: 0, technicalDebtDelta: 4, customerCountDelta: -8 },
+          },
+        ],
+      },
+    ],
+    high: [
+      {
+        narrative:
+          "Your entire checkout flow went down during a flash sale you promoted heavily — the traffic spike overwhelmed a database that was never load-tested, and customers are livid on social media.",
+        choices: [
+          {
+            label: "Throw more server capacity at it and restart",
+            description: "Gets checkout back online quickly and cheaply, but the untested database bottleneck is still there for next time.",
+            consequences: { cashDelta: -3500, technicalDebtDelta: 13, customerCountDelta: -18 },
+          },
+          {
+            label: "Re-architect the checkout data layer for real load",
+            description: "Expensive and takes real time under pressure, but genuinely fixes the scaling weakness.",
+            consequences: { cashDelta: -22000, technicalDebtDelta: -19, customerCountDelta: -6 },
+          },
+        ],
+      },
+      {
+        narrative:
+          "A misconfigured cloud storage bucket exposed customer shipping addresses and order histories publicly for several days before anyone noticed. It's already being reported in tech press.",
+        choices: [
+          {
+            label: "Lock down the bucket and issue a minimal notice",
+            description: "Contains further exposure cheaply and fast, but doesn't address the broader lack of infrastructure review that let this happen.",
+            consequences: { cashDelta: -5000, technicalDebtDelta: 11, customerCountDelta: -28 },
+          },
+          {
+            label: "Full infrastructure security review and public disclosure",
+            description: "Costly and slow, but rebuilds customer trust and materially reduces recurrence risk.",
+            consequences: { cashDelta: -35000, technicalDebtDelta: -24, customerCountDelta: -14 },
+          },
+        ],
+      },
+    ],
+  },
+};
+
+/**
+ * Selects one fallback template for the given industry + severity band.
+ * Variant choice is arbitrary (uses Math.random by default); an optional
+ * `rand` fn (returning [0,1)) can be passed for deterministic selection in
+ * tests.
+ */
+export function selectFallbackEvent(
+  industry: Industry,
+  severityBand: SeverityBand,
+  rand: () => number = Math.random,
+): FallbackEventTemplate {
+  const variants = FALLBACK_EVENT_TEMPLATES[industry][severityBand];
+  const index = Math.floor(rand() * variants.length) % variants.length;
+  return variants[index];
+}
+
+export { FALLBACK_EVENT_TEMPLATES };
