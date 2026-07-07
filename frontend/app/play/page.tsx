@@ -18,6 +18,9 @@ import { isLowRunway } from "@/components/dashboard/formatters";
 import { EventCard } from "@/components/event/EventCard";
 import { EndScreen } from "@/components/endstates/EndScreen";
 import FundraisingPanel from "@/components/fundraising/FundraisingPanel";
+import { Wordmark } from "@/components/brand/Wordmark";
+
+const SUCCESS_VALUATION = 1_000_000;
 
 export default function PlayPage() {
   const router = useRouter();
@@ -53,9 +56,6 @@ export default function PlayPage() {
 
   if (!state) {
     // Direct navigation without an existing game — redirect to creation.
-    // useEffect-free redirect: safe to call during render here since Next's
-    // App Router client navigation is idempotent and this only fires once
-    // state resolves to null on mount.
     if (typeof window !== "undefined") {
       router.replace("/");
     }
@@ -74,46 +74,95 @@ export default function PlayPage() {
 
   const lowRunway = isLowRunway(state.metrics.runwayWeeks, LOW_RUNWAY_WARNING_WEEKS);
 
+  // Week-over-week deltas: find last completed week's snapshot for trend chips.
+  const previous =
+    state.turnHistory.find((r) => r.week === state.metrics.week - 1)?.metricsSnapshot ?? null;
+
+  const goalPct = Math.max(
+    0,
+    Math.min(100, (state.metrics.valuation / SUCCESS_VALUATION) * 100),
+  );
+
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">{state.company.name}</h1>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            {state.company.industry} · {state.company.founderType} · Week{" "}
-            {state.metrics.week}
-          </p>
+    <div className="flex min-h-full flex-col">
+      {/* Top bar */}
+      <header
+        className="sticky top-0 z-30 border-b backdrop-blur-md"
+        style={{ borderColor: "var(--border)", background: "color-mix(in srgb, var(--bg) 78%, transparent)" }}
+      >
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-3.5">
+          <div className="flex items-center gap-4">
+            <Wordmark />
+            <span className="hidden h-6 w-px sm:block" style={{ background: "var(--border)" }} />
+            <div className="hidden sm:block">
+              <div className="text-sm font-semibold leading-tight" style={{ color: "var(--ink)" }}>
+                {state.company.name}
+              </div>
+              <div className="text-[11px]" style={{ color: "var(--ink-3)" }}>
+                {state.company.industry} · {state.company.founderType}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span
+              className="rounded-full px-3 py-1.5 text-xs font-semibold"
+              style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--ink-2)" }}
+            >
+              Week {state.metrics.week}
+            </span>
+            <button
+              type="button"
+              onClick={handleAdvanceWeek}
+              disabled={isAdvancing || Boolean(state.pendingEngineeringEvent)}
+              className="btn btn-primary px-4 py-2.5 text-sm"
+            >
+              {isAdvancing ? "Advancing…" : "Advance Week →"}
+            </button>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={handleAdvanceWeek}
-          disabled={isAdvancing || Boolean(state.pendingEngineeringEvent)}
-          className="rounded-md bg-black px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-black"
-        >
-          {isAdvancing ? "Advancing…" : "Advance Week"}
-        </button>
       </header>
 
-      {lowRunway && (
-        <div className="rounded-md border border-red-500 bg-red-50 px-4 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-400">
-          Low runway warning: less than {LOW_RUNWAY_WARNING_WEEKS} weeks of cash
-          remaining at the current burn rate.
+      <main className="anim-fade-up mx-auto flex w-full max-w-6xl flex-col gap-5 px-6 py-6">
+        {/* Goal meter */}
+        <div className="card flex flex-col gap-2.5 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          <div className="flex items-baseline gap-2">
+            <span className="eyebrow">Progress to exit</span>
+            <span className="text-sm font-semibold" style={{ color: "var(--ink-2)" }}>
+              {goalPct.toFixed(1)}% of $1M valuation
+            </span>
+          </div>
+          <div className="h-2 flex-1 overflow-hidden rounded-full sm:max-w-md" style={{ background: "var(--surface-2)" }}>
+            <div
+              className="h-full rounded-full transition-[width] duration-500"
+              style={{ width: `${goalPct}%`, background: "linear-gradient(90deg, var(--accent), var(--accent-2))" }}
+            />
+          </div>
         </div>
-      )}
 
-      <MetricsPanel
-        metrics={state.metrics}
-        founderOwnershipPct={state.metrics.founderOwnershipPct}
-      />
+        {lowRunway && (
+          <div
+            className="anim-fade-up flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-medium"
+            style={{ background: "var(--crit-soft)", border: "1px solid color-mix(in srgb, var(--crit) 45%, transparent)", color: "var(--crit)" }}
+          >
+            <span aria-hidden>⚠</span>
+            <span>
+              Low runway — under {LOW_RUNWAY_WARNING_WEEKS} weeks of cash left at the current burn.
+              Raise, or cut the burn.
+            </span>
+          </div>
+        )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <RevenueChart turnHistory={state.turnHistory} />
+        <MetricsPanel metrics={state.metrics} previous={previous} />
+
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <RevenueChart turnHistory={state.turnHistory} currentMrr={state.metrics.mrr} />
+          </div>
+          <div>
+            <FundraisingPanel />
+          </div>
         </div>
-        <div>
-          <FundraisingPanel />
-        </div>
-      </div>
+      </main>
 
       {pendingEvent && <EventCard event={pendingEvent} onChoose={handleChoose} />}
     </div>

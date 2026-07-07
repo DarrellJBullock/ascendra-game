@@ -15,6 +15,7 @@ import {
   generateFundraisingOffer,
   isRoundAvailable,
 } from "@/src/game/fundraising";
+import { formatCurrency } from "@/components/dashboard/formatters";
 import type { FundraisingRoundType } from "@/src/game/types";
 
 const ROUND_OPTIONS: FundraisingRoundType[] = ["Angel", "Seed"];
@@ -43,10 +44,7 @@ export default function FundraisingPanel() {
       state.metrics,
       state.company.founderModifiers,
     );
-    applyState({
-      ...state,
-      fundraisingOffers: [...state.fundraisingOffers, offer],
-    });
+    applyState({ ...state, fundraisingOffers: [...state.fundraisingOffers, offer] });
   }
 
   function handleAccept() {
@@ -60,86 +58,95 @@ export default function FundraisingPanel() {
   }
 
   return (
-    <div className="rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
-      <h2 className="text-sm font-semibold">Fundraising</h2>
-      <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-        Founder ownership: {state.metrics.founderOwnershipPct.toFixed(1)}%
-      </p>
+    <div className="card flex h-full flex-col gap-4 p-5">
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-sm font-semibold" style={{ color: "var(--ink)" }}>Fundraising</h2>
+          <p className="eyebrow" style={{ marginTop: 2 }}>Trade equity for runway</p>
+        </div>
+        <div className="text-right">
+          <div className="text-lg font-semibold tabular-nums" style={{ color: "var(--ink)" }}>
+            {state.metrics.founderOwnershipPct.toFixed(1)}%
+          </div>
+          <div className="eyebrow" style={{ marginTop: 1 }}>you own</div>
+        </div>
+      </div>
 
       {pendingOffer ? (
-        <div className="mt-3 flex flex-col gap-2 text-sm">
-          <p className="font-medium">{pendingOffer.roundType} round offer</p>
-          <ul className="flex flex-col gap-1">
-            <li className="flex justify-between gap-4">
-              <span>Offered cash</span>
-              <span>${pendingOffer.offeredCash.toLocaleString()}</span>
-            </li>
-            <li className="flex justify-between gap-4">
-              <span>Implied valuation</span>
-              <span>${pendingOffer.impliedValuation.toLocaleString()}</span>
-            </li>
-            <li className="flex justify-between gap-4">
-              <span>Equity requested</span>
-              <span>{pendingOffer.equityPct}%</span>
-            </li>
-          </ul>
-          <div className="mt-2 flex gap-2">
-            <button
-              type="button"
-              onClick={handleAccept}
-              className="rounded-md bg-black px-3 py-2 text-xs font-semibold text-white dark:bg-white dark:text-black"
-            >
+        <div className="flex flex-col gap-3">
+          <div className="rounded-xl p-4" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold" style={{ color: "var(--ink)" }}>
+                {pendingOffer.roundType} round
+              </span>
+              <span className="pill pill-muted">offer on the table</span>
+            </div>
+            <dl className="mt-3 flex flex-col gap-2 text-sm">
+              <div className="flex items-center justify-between">
+                <dt style={{ color: "var(--ink-2)" }}>Cash offered</dt>
+                <dd className="font-semibold tabular-nums" style={{ color: "var(--good)" }}>
+                  +{formatCurrency(pendingOffer.offeredCash)}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt style={{ color: "var(--ink-2)" }}>Implied valuation</dt>
+                <dd className="tabular-nums" style={{ color: "var(--ink)" }}>{formatCurrency(pendingOffer.impliedValuation)}</dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt style={{ color: "var(--ink-2)" }}>Equity requested</dt>
+                <dd className="tabular-nums" style={{ color: "var(--crit)" }}>−{pendingOffer.equityPct}%</dd>
+              </div>
+            </dl>
+          </div>
+          <div className="flex gap-2">
+            <button type="button" onClick={handleAccept} className="btn btn-primary flex-1 px-3 py-2.5 text-sm">
               Accept
             </button>
-            <button
-              type="button"
-              onClick={handleDecline}
-              className="rounded-md border border-zinc-300 px-3 py-2 text-xs font-semibold dark:border-zinc-700"
-            >
+            <button type="button" onClick={handleDecline} className="btn btn-ghost flex-1 px-3 py-2.5 text-sm">
               Decline
             </button>
           </div>
         </div>
+      ) : resolvedThisWeek ? (
+        <p
+          className="rounded-xl px-3 py-3 text-xs leading-relaxed"
+          style={{ background: "var(--surface-2)", color: "var(--ink-3)", border: "1px solid var(--border)" }}
+        >
+          You already {resolvedThisWeek.status} a {resolvedThisWeek.roundType} offer this week. Come
+          back next week.
+        </p>
       ) : (
-        <div className="mt-3 flex flex-col gap-2 text-sm">
-          {resolvedThisWeek ? (
-            <p className="text-xs text-zinc-500">
-              You already {resolvedThisWeek.status} a {resolvedThisWeek.roundType}{" "}
-              offer this week. Try again next week.
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-2">
+            {ROUND_OPTIONS.map((round) => {
+              const available = isRoundAvailable(round, state.metrics);
+              return (
+                <button
+                  key={round}
+                  type="button"
+                  disabled={!available}
+                  onClick={() => setSelectedRound(round)}
+                  aria-pressed={selectedRound === round}
+                  className="chip px-3 py-2.5 text-sm font-medium"
+                >
+                  {round}
+                  {!available && round === "Seed" ? " 🔒" : ""}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            disabled={!canRaise || !isRoundAvailable(selectedRound, state.metrics)}
+            onClick={handleRaise}
+            className="btn btn-primary w-full px-3 py-2.5 text-sm"
+          >
+            Attempt raise
+          </button>
+          {!isRoundAvailable("Seed", state.metrics) && (
+            <p className="text-[11px]" style={{ color: "var(--ink-3)" }}>
+              Seed unlocks once you reach the MRR threshold.
             </p>
-          ) : (
-            <>
-              <div className="flex flex-wrap gap-2">
-                {ROUND_OPTIONS.map((round) => {
-                  const available = isRoundAvailable(round, state.metrics);
-                  return (
-                    <button
-                      key={round}
-                      type="button"
-                      disabled={!available}
-                      onClick={() => setSelectedRound(round)}
-                      aria-pressed={selectedRound === round}
-                      className={`rounded-md border px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-40 ${
-                        selectedRound === round
-                          ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-                          : "border-zinc-300 dark:border-zinc-700"
-                      }`}
-                    >
-                      {round}
-                      {!available && round === "Seed" ? " (locked)" : ""}
-                    </button>
-                  );
-                })}
-              </div>
-              <button
-                type="button"
-                disabled={!canRaise || !isRoundAvailable(selectedRound, state.metrics)}
-                onClick={handleRaise}
-                className="rounded-md bg-black px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-black"
-              >
-                Attempt raise
-              </button>
-            </>
           )}
         </div>
       )}

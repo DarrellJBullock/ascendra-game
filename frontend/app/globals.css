@@ -1,26 +1,232 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ============================================================================
+   Ascendra design system — a "startup command center" theme.
+   Dark is the primary/hero look; a premium light variant is fully supported.
+   All color goes through tokens so the two themes stay coherent.
+   The chart's single series uses --accent (brand indigo); green/amber/rose are
+   RESERVED status colors (good/warn/critical), never reused as brand hues.
+   ============================================================================ */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  /* Light theme (default) */
+  --bg: #f4f6fa;
+  --glow-1: rgba(99, 102, 241, 0.10);
+  --glow-2: rgba(16, 185, 129, 0.07);
+  --surface: #ffffff;
+  --surface-2: #f7f8fc;
+  --surface-hover: #f0f2f8;
+  --border: #e6e9f0;
+  --border-strong: #d3d8e3;
+  --ink: #0e1424;
+  --ink-2: #566078;
+  --ink-3: #949cb0;
+  --accent: #4f46e5;
+  --accent-2: #7c74f0;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(79, 70, 229, 0.10);
+  --good: #0e9f6e;
+  --good-soft: rgba(14, 159, 110, 0.12);
+  --warn: #b7791f;
+  --warn-soft: rgba(183, 121, 31, 0.12);
+  --crit: #e02454;
+  --crit-soft: rgba(224, 36, 84, 0.10);
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px -12px rgba(16, 24, 40, 0.12);
+  --shadow-lg: 0 24px 60px -20px rgba(16, 24, 40, 0.28);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #080a10;
+    --glow-1: rgba(124, 116, 240, 0.16);
+    --glow-2: rgba(52, 211, 153, 0.08);
+    --surface: #12151d;
+    --surface-2: #171b25;
+    --surface-hover: #1c2130;
+    --border: #262c3a;
+    --border-strong: #333b4d;
+    --ink: #e8ecf4;
+    --ink-2: #9aa4b8;
+    --ink-3: #626c81;
+    --accent: #818cf8;
+    --accent-2: #a5adfb;
+    --accent-ink: #0a0d14;
+    --accent-soft: rgba(129, 140, 248, 0.15);
+    --good: #34d399;
+    --good-soft: rgba(52, 211, 153, 0.14);
+    --warn: #fbbf24;
+    --warn-soft: rgba(251, 191, 36, 0.14);
+    --crit: #fb7185;
+    --crit-soft: rgba(251, 113, 133, 0.14);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -16px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 30px 70px -24px rgba(0, 0, 0, 0.75);
   }
 }
 
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  height: 100%;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* Ambient command-center glow behind everything. */
+  background-image:
+    radial-gradient(60rem 40rem at 15% -10%, var(--glow-1), transparent 60%),
+    radial-gradient(50rem 40rem at 100% 0%, var(--glow-2), transparent 55%);
+  background-attachment: fixed;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+/* --- Reusable surfaces & controls -------------------------------------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 11px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease, opacity 0.15s ease, filter 0.15s ease;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--accent-2), var(--accent));
+  color: var(--accent-ink);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 8px 20px -10px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.btn-primary:not(:disabled):hover {
+  filter: brightness(1.06);
+}
+
+.btn-ghost {
+  background: var(--surface-2);
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+.btn-ghost:not(:disabled):hover {
+  background: var(--surface-hover);
+}
+
+/* Segmented / selectable chips (industry, founder, funding round). */
+.chip {
+  border-radius: 11px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-weight: 500;
+  transition: all 0.14s ease;
+  cursor: pointer;
+}
+.chip:not(:disabled):hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong));
+  background: var(--surface-hover);
+}
+.chip[aria-pressed="true"] {
+  color: var(--accent-ink);
+  background: linear-gradient(180deg, var(--accent-2), var(--accent));
+  border-color: transparent;
+  box-shadow: 0 6px 16px -10px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.field {
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 11px;
+  color: var(--ink);
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+}
+.field::placeholder {
+  color: var(--ink-3);
+}
+.field:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Status pills (deltas, badges) */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  line-height: 1.3;
+}
+.pill-good { color: var(--good); background: var(--good-soft); }
+.pill-crit { color: var(--crit); background: var(--crit-soft); }
+.pill-warn { color: var(--warn); background: var(--warn-soft); }
+.pill-muted { color: var(--ink-3); background: var(--surface-2); }
+
+/* --- Motion ------------------------------------------------------------ */
+
+@keyframes ascendra-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ascendra-pop {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes ascendra-overlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.anim-fade-up { animation: ascendra-fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-pop { animation: ascendra-pop 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-overlay { animation: ascendra-overlay 0.2s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-up, .anim-pop, .anim-overlay { animation: none; }
+  .btn:active { transform: none; }
 }
