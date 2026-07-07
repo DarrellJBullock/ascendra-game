@@ -50,7 +50,7 @@ export function CompanyCreationForm() {
   return (
     <div className="anim-fade-up mx-auto flex w-full max-w-xl flex-col gap-8 px-6 py-14">
       <div className="flex flex-col gap-4">
-        <Wordmark variant="lockup" height={76} />
+        <Wordmark variant="lockup" height={54} />
         <div>
           <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--ink)" }}>
             Found your company

@@ -42,7 +42,7 @@ export function EndScreen({ status, state }: EndScreenProps) {
   return (
     <div className="flex min-h-full flex-col items-center justify-center px-6 py-16">
       <div className="anim-fade-up flex w-full max-w-lg flex-col items-center gap-7 text-center">
-        <Wordmark variant="lockup" height={52} />
+        <Wordmark variant="lockup" height={44} />
 
         <div className="flex flex-col items-center gap-4">
           <span
