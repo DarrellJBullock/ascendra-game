@@ -9,6 +9,7 @@ the field is Optional and unset in dev/stub is fine.
 from functools import lru_cache
 from typing import Optional
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -40,6 +41,16 @@ class Settings(BaseSettings):
     # Leave unset (None) for the default "auto" behavior: stub when no
     # OPENAI_API_KEY is configured, real call otherwise.
     use_stub: Optional[bool] = None
+
+    @field_validator("use_stub", mode="before")
+    @classmethod
+    def _empty_str_is_unset(cls, v: object) -> object:
+        # An empty env var (e.g. docker-compose passing `USE_STUB=` when the
+        # var is unset in .env) should mean "not set" -> fall back to the
+        # None/auto default, not a bool-parse error that crashes startup.
+        if isinstance(v, str) and v.strip() == "":
+            return None
+        return v
 
     @property
     def cors_origins_list(self) -> list[str]:
