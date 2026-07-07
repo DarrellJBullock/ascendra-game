@@ -2,8 +2,8 @@
 Application settings.
 
 Stateless service — the only external secret this proxy needs is
-OPENAI_API_KEY, wired here so BE-2 (real OpenAI call) can pick it up
-via `get_settings().openai_api_key`. NOT required to boot in stub mode;
+ANTHROPIC_API_KEY, wired here so BE-2 (real Claude call) can pick it up
+via `get_settings().anthropic_api_key`. NOT required to boot in stub mode;
 the field is Optional and unset in dev/stub is fine.
 """
 from functools import lru_cache
@@ -16,13 +16,16 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    openai_api_key: Optional[str] = None
-    # Cheap/fast tier model — narrative flavor text only, not a reasoning task.
-    openai_model: str = "gpt-4o-mini"
+    anthropic_api_key: Optional[str] = None
+    # Claude model for narrative flavor text (thinking disabled in ai_client —
+    # this is short generation, not a reasoning task). Configurable: set to
+    # claude-haiku-4-5 for the cheapest tier, or claude-opus-4-8 for the
+    # richest prose.
+    anthropic_model: str = "claude-sonnet-5"
     # Server-side timeout, comfortably under the client's 5s hard abort so a
     # slow upstream call fails clean (structured error) before the client
     # would've killed the connection anyway.
-    openai_timeout_seconds: float = 4.0
+    anthropic_timeout_seconds: float = 4.0
     # Comma-separated list of allowed origins for local frontend dev.
     cors_allow_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     # Per-IP rate limit (requests/minute) on the billed generate endpoint
@@ -60,7 +63,7 @@ class Settings(BaseSettings):
     def effective_use_stub(self) -> bool:
         if self.use_stub is not None:
             return self.use_stub
-        return not bool(self.openai_api_key)
+        return not bool(self.anthropic_api_key)
 
 
 @lru_cache

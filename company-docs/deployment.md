@@ -4,7 +4,7 @@ Status: DO-1/DO-2/DO-3 deliverable. Two stateless deployables per
 `architecture.md` Section 2/7 — no database, no Redis, no persistent
 volumes, no auth. This doc covers local/full-stack verification and the
 concrete steps for a real deploy once cloud accounts and a real
-`OPENAI_API_KEY` exist.
+`ANTHROPIC_API_KEY` exist.
 
 ## Topology
 
@@ -13,13 +13,13 @@ Browser ──HTTP──> Frontend (Next.js, SSR/static)
    │                    │
    │  (only network dep)│  build-time NEXT_PUBLIC_AI_PROXY_URL
    ▼                    ▼
-Backend (FastAPI, stateless) ──outbound HTTPS──> OpenAI API
+Backend (FastAPI, stateless) ──outbound HTTPS──> Anthropic API
 ```
 
 - Frontend: all game state lives in the browser (`localStorage`). The only
   network call is `POST /v1/events/generate`, wrapped in a hard 5s
   client-side timeout with a full local fallback (architecture.md Section 5).
-- Backend: one real secret (`OPENAI_API_KEY`), no DB, horizontally trivial —
+- Backend: one real secret (`ANTHROPIC_API_KEY`), no DB, horizontally trivial —
   any number of replicas can run behind a load balancer with zero shared
   state.
 
@@ -38,9 +38,9 @@ Backend (FastAPI, stateless) ──outbound HTTPS──> OpenAI API
 
 | Variable | Consumed by | Points at | Notes |
 |---|---|---|---|
-| `OPENAI_API_KEY` | backend | OpenAI API | The one real secret. Leave unset to run the built-in stub (schema-valid canned response) — safe for local dev/demo, no account needed. |
-| `OPENAI_MODEL` | backend | — | Defaults to `gpt-4o-mini` (cheap/fast tier). |
-| `OPENAI_TIMEOUT_SECONDS` | backend | — | Server-side call timeout, kept under the frontend's 5s hard abort. |
+| `ANTHROPIC_API_KEY` | backend | Anthropic API | The one real secret. Leave unset to run the built-in stub (schema-valid canned response) — safe for local dev/demo, no account needed. |
+| `ANTHROPIC_MODEL` | backend | — | Defaults to `claude-sonnet-5`. Set `claude-haiku-4-5` (cheapest) or `claude-opus-4-8` (richest). |
+| `ANTHROPIC_TIMEOUT_SECONDS` | backend | — | Server-side call timeout, kept under the frontend's 5s hard abort. |
 | `CORS_ALLOW_ORIGINS` | backend | frontend's real origin | **Must be updated at deploy time** to the actual deployed frontend URL (e.g. `https://ascendra.vercel.app`). Comma-separated for multiple origins (e.g. preview + prod). |
 | `USE_STUB` | backend | — | Force `true`/`false` to override auto-detection; leave blank for auto (stub only when no key). |
 | `RATE_LIMIT_PER_MINUTE` | backend | — | Per-IP rate limit on the billed generate endpoint (default `30`). Security review Finding 1. **In-memory/per-process** — if you run more than one backend instance, this limit is per-instance, so front it with an edge/CDN/load-balancer rate limit for a true global cap. |
@@ -50,7 +50,7 @@ Backend (FastAPI, stateless) ──outbound HTTPS──> OpenAI API
 ## Local full-stack verification (docker compose)
 
 ```bash
-cp .env.example .env      # edit if you have a real OPENAI_API_KEY; blank is fine
+cp .env.example .env      # edit if you have a real ANTHROPIC_API_KEY; blank is fine
 docker compose up --build
 # frontend: http://localhost:3000
 # backend:  http://localhost:8000/v1/health
@@ -100,7 +100,7 @@ service.
 
 1. Build and push the image: `docker build -t <registry>/ascendra-backend:<tag> ./backend && docker push ...`
 2. Deploy the container, exposing port 8000, injecting:
-   - `OPENAI_API_KEY` from your host's secrets manager (never hardcode; never commit to `.env` in git — `.env` is git-ignored in this repo already).
+   - `ANTHROPIC_API_KEY` from your host's secrets manager (never hardcode; never commit to `.env` in git — `.env` is git-ignored in this repo already).
    - `CORS_ALLOW_ORIGINS` set to the frontend's real deployed origin.
 3. Point a health check at `GET /v1/health` (already wired in `docker-compose.yml`'s healthcheck block — reuse the same command/probe on whatever host you pick).
 4. Confirm outbound HTTPS to `api.openai.com` is allowed (no other outbound/inbound needs beyond the exposed port).
@@ -133,8 +133,8 @@ image tag available until the new one is confirmed healthy.
   user-facing surface) — standard static/SSR rollback (previous
   build/container) applies.
 - Cost: one small stateless container/serverless function for the backend
-  (no idle DB/Redis cost) + OpenAI usage cost, bounded by design to 4-10
-  calls per 20-week playthrough using the cheap `gpt-4o-mini` tier and small
+  (no idle DB/Redis cost) + Anthropic usage cost, bounded by design to 4-10
+  calls per 20-week playthrough using the `claude-sonnet-5` tier and small
   fixed-size prompts (architecture.md Section 5, "Cheap-by-design measures").
   No infra cost from this deploy package beyond compute for the two
   containers/functions themselves.

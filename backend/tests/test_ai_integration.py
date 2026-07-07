@@ -1,16 +1,16 @@
 """
-BE-5: tests for the real-call path with the OpenAI client mocked. Never hits
+BE-5: tests for the real-call path with the Anthropic client mocked. Never hits
 the real API. Forces the real-call path (bypassing the stub) via the
 USE_STUB=false settings override combined with a dummy API key, then patches
-app.ai_client.OpenAI so no network call is ever made.
+app.ai_client.anthropic.Anthropic so no network call is ever made.
 """
 import json
 from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
+from anthropic import APIError, APITimeoutError
 from fastapi.testclient import TestClient
-from openai import APIError, APITimeoutError
 
 from app.config import Settings, get_settings
 from app.main import app
@@ -30,7 +30,7 @@ VALID_PAYLOAD = {"trigger": "engineering", "context": VALID_CONTEXT}
 
 
 def _force_real_call_settings() -> Settings:
-    return Settings(openai_api_key="dummy-test-key", use_stub=False)
+    return Settings(anthropic_api_key="dummy-test-key", use_stub=False)
 
 
 @pytest.fixture(autouse=True)
@@ -41,25 +41,24 @@ def _override_settings():
     get_settings.cache_clear()
 
 
-def _fake_completion(content_dict: dict) -> SimpleNamespace:
-    message = SimpleNamespace(content=json.dumps(content_dict))
-    choice = SimpleNamespace(message=message)
-    return SimpleNamespace(choices=[choice])
+def _fake_message(content_dict: dict) -> SimpleNamespace:
+    # Mirrors an anthropic Message: content is a list of blocks; the JSON is in
+    # a single text block, with a non-refusal stop_reason.
+    text_block = SimpleNamespace(type="text", text=json.dumps(content_dict))
+    return SimpleNamespace(content=[text_block], stop_reason="end_turn")
 
 
 client = TestClient(app)
 
 
 def _patched_settings_and_client(mock_create):
-    """Patch both get_settings (force real-call path) and the OpenAI client."""
+    """Patch both get_settings (force real-call path) and the Anthropic client."""
     return (
         patch("app.routes.get_settings", _force_real_call_settings),
         patch(
-            "app.ai_client.OpenAI",
+            "app.ai_client.anthropic.Anthropic",
             return_value=SimpleNamespace(
-                chat=SimpleNamespace(
-                    completions=SimpleNamespace(create=mock_create)
-                )
+                messages=SimpleNamespace(create=mock_create)
             ),
         ),
     )
@@ -103,7 +102,7 @@ def test_real_path_valid_model_response_passes_through() -> None:
             },
         ],
     }
-    mock_create = lambda **kwargs: _fake_completion(valid)  # noqa: E731
+    mock_create = lambda **kwargs: _fake_message(valid)  # noqa: E731
     p1, p2 = _patched_settings_and_client(mock_create)
     with p1, p2:
         resp = client.post("/v1/events/generate", json=VALID_PAYLOAD)
@@ -183,7 +182,7 @@ def test_real_path_valid_model_response_passes_through() -> None:
     ],
 )
 def test_real_path_malformed_response_returns_structured_error(broken_payload) -> None:
-    mock_create = lambda **kwargs: _fake_completion(broken_payload)  # noqa: E731
+    mock_create = lambda **kwargs: _fake_message(broken_payload)  # noqa: E731
     p1, p2 = _patched_settings_and_client(mock_create)
     with p1, p2:
         resp = client.post("/v1/events/generate", json=VALID_PAYLOAD)
@@ -193,8 +192,21 @@ def test_real_path_malformed_response_returns_structured_error(broken_payload) -
 
 def test_real_path_broken_json_returns_structured_error() -> None:
     def mock_create(**kwargs):
-        message = SimpleNamespace(content="not valid json{{{")
-        return SimpleNamespace(choices=[SimpleNamespace(message=message)])
+        text_block = SimpleNamespace(type="text", text="not valid json{{{")
+        return SimpleNamespace(content=[text_block], stop_reason="end_turn")
+
+    p1, p2 = _patched_settings_and_client(mock_create)
+    with p1, p2:
+        resp = client.post("/v1/events/generate", json=VALID_PAYLOAD)
+    assert resp.status_code == 502
+    assert resp.json() == {"error": "upstream_error"}
+
+
+def test_real_path_refusal_returns_structured_error() -> None:
+    # Claude safety classifiers can decline with HTTP 200 + stop_reason "refusal"
+    # (empty content). Must route to the frontend fallback, not crash.
+    def mock_create(**kwargs):
+        return SimpleNamespace(content=[], stop_reason="refusal")
 
     p1, p2 = _patched_settings_and_client(mock_create)
     with p1, p2:

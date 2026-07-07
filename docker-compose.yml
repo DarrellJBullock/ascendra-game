@@ -2,7 +2,7 @@
 #
 # Two stateless services (see company-docs/architecture.md Section 2 & 7):
 #   - backend: FastAPI AI-event proxy. No DB/Redis/volumes. One secret:
-#     OPENAI_API_KEY (optional — auto-falls-back to a stub response when unset).
+#     ANTHROPIC_API_KEY (optional — auto-falls-back to a stub response when unset).
 #   - frontend: Next.js app, all game state client-side (browser localStorage).
 #
 # Env wiring:
@@ -20,9 +20,9 @@ services:
     ports:
       - "8000:8000"
     environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
-      OPENAI_TIMEOUT_SECONDS: ${OPENAI_TIMEOUT_SECONDS:-4.0}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-5}
+      ANTHROPIC_TIMEOUT_SECONDS: ${ANTHROPIC_TIMEOUT_SECONDS:-4.0}
       CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:3000}
       USE_STUB: ${USE_STUB:-}
     healthcheck:
