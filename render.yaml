@@ -1,0 +1,35 @@
+# Render Blueprint for the Ascendra AI-event proxy (backend).
+# Deploy: Render dashboard -> New -> Blueprint -> connect this repo. Render reads
+# this file, builds backend/Dockerfile, and provisions the service. You'll be
+# prompted for ANTHROPIC_API_KEY (the one secret; not stored in the repo).
+#
+# Stateless, no database/volumes. Free plan spins down after inactivity, so the
+# first request after an idle period cold-starts (~30-60s) and the frontend
+# falls back to templated events for that one call — upgrade the plan if you
+# want it always-warm.
+
+services:
+  - type: web
+    name: ascendra-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /v1/health
+    autoDeploy: true
+    envVars:
+      # Secret — set the value in the Render dashboard (sync:false keeps it out
+      # of the repo). This is the only real secret the service needs.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-haiku-4-5
+      - key: ANTHROPIC_TIMEOUT_SECONDS
+        value: "4.8"
+      # Must match the frontend's public origin so the browser can call this API.
+      - key: CORS_ALLOW_ORIGINS
+        value: https://frontend-psi-one-63.vercel.app
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "30"
+      - key: MAX_REQUEST_BODY_BYTES
+        value: "8192"
