@@ -124,6 +124,20 @@ export interface ProductActionRecord {
   customerCountDelta: number;
 }
 
+/** Phase 2 — Team Management. Hire an engineer (slows weekly debt drift, adds
+ * ongoing salary) or let one go (removes salary, costs severance). Union so
+ * richer roles can be added later without a shape change. */
+export type TeamActionType = "hire" | "fire";
+
+/** One team action taken in a given week (at most one per week). */
+export interface TeamActionRecord {
+  id: string;
+  week: number;
+  action: TeamActionType;
+  cashDelta: number;
+  teamSizeDelta: number;
+}
+
 /**
  * The output of the ONE stochastic step (EV-1's `rollEngineeringEvent`)
  * before narrative/choices exist for it. `advanceWeek` (TE-7) sets this when
@@ -156,6 +170,12 @@ export interface GameState {
    * deserialize; read sites default to `[]` (see product.ts / factory.ts).
    */
   productActions?: ProductActionRecord[];
+  /**
+   * Phase 2 — Team Management. Append-only log of hire/fire actions (at most
+   * one per week). Optional so pre-feature saves still deserialize; read sites
+   * default to `[]`.
+   */
+  teamActions?: TeamActionRecord[];
   gameStatus: "in_progress" | "bankrupt" | "success";
   /**
    * Non-null between "an Engineering event rolled this week" and "the player

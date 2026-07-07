@@ -90,6 +90,7 @@ export function advanceWeek(state: GameState, rngSeed?: number): GameState {
   const technicalDebt = applyTechnicalDebtDrift(
     state.metrics.technicalDebt,
     state.company.founderModifiers,
+    state.metrics.teamSize,
   );
 
   const metricsAfterCore = {

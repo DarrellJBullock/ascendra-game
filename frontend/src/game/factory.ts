@@ -47,6 +47,7 @@ export function createNewGameState(input: NewGameInput): GameState {
     eventLog: [],
     fundraisingOffers: [],
     productActions: [],
+    teamActions: [],
     gameStatus: "in_progress",
     pendingEngineeringEvent: null,
     sessionSeed: Math.floor(Math.random() * 0xffffffff),

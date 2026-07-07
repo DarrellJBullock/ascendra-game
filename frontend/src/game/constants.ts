@@ -72,6 +72,14 @@ export const BASE_CUSTOMER_CHURN_RATE = 0.03; // TUNED (TE-9) — was 0.02 place
  * while a "pay down debt" playstyle can hold debt in the teens/20s. */
 export const TECHNICAL_DEBT_DRIFT_RATE = 1.5; // kept — verified via tuningSim.ts
 
+/** Phase 2 (Team Management): each engineer BEYOND the solo founder reduces the
+ * weekly technical-debt drift by this much (team can halt drift, never reverse
+ * it — active paydown is Product Management's job). At the starting teamSize of
+ * 1 this is a no-op, so the tuned baseline economy is preserved for a player
+ * who never hires; hiring trades salary burn for debt control. PLACEHOLDER —
+ * not yet through a formal balance pass. */
+export const TEAM_DEBT_REDUCTION_PER_ENGINEER = 0.5;
+
 /** Minimum MRR required before a Seed round offer becomes available.
  * TE-9: kept at $5,000 — with BASE_PRICE_PER_CUSTOMER=60 this is reachable
  * around ~85 customers, comfortably mid-game, matching the spec's own
