@@ -27,6 +27,7 @@ import FinancialsButton from "@/components/financials/FinancialsButton";
 import CompetitorsButton from "@/components/competitors/CompetitorsButton";
 import AdvisorButton from "@/components/advisor/AdvisorButton";
 import BoardButton from "@/components/board/BoardButton";
+import NewsButton from "@/components/news/NewsButton";
 import CopyRunButton from "@/components/playtest/CopyRunButton";
 import { Wordmark } from "@/components/brand/Wordmark";
 
@@ -164,9 +165,10 @@ export default function PlayPage() {
 
         <ExitsBanner />
 
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <BoardButton />
           <AdvisorButton />
+          <NewsButton />
           <CompetitorsButton />
           <FinancialsButton />
         </div>

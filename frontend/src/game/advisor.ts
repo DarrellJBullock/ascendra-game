@@ -89,7 +89,7 @@ export async function fetchAdvisorReply(
   state: GameState,
   question: string,
   history: AdvisorMessage[],
-  mode: "advisor" | "board" = "advisor",
+  mode: "advisor" | "board" | "news" = "advisor",
 ): Promise<string | null> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
