@@ -1,0 +1,41 @@
+# Keep-warm pinger for the Ascendra QA-2 playtest.
+#
+# Render's free plan spins the backend down after ~15 min idle, and the first
+# request after that cold-starts (~30-60s), which reads as "broken" to a tester.
+# This workflow pings the health endpoint every ~10 minutes so the backend stays
+# warm during the playtest window.
+#
+# TEMPORARY — remove or disable after the playtest (Actions tab -> this workflow
+# -> "..." -> Disable, or delete this file). GitHub cron can be delayed a few
+# minutes under load, so an occasional cold start is still possible; for
+# near-zero cold starts use an external monitor (UptimeRobot / cron-job.org) or
+# a paid Render plan.
+
+name: keepwarm
+
+on:
+  schedule:
+    - cron: "*/10 * * * *" # every 10 minutes (UTC)
+  workflow_dispatch: {} # allow manual "Run workflow" from the Actions tab
+
+# Don't pile up runs if one is slow.
+concurrency:
+  group: keepwarm
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping backend health
+        run: |
+          for i in 1 2 3; do
+            code=$(curl -sS -m 60 -o /dev/null -w '%{http_code}' \
+              https://ascendra-backend-rs74.onrender.com/v1/health || echo "000")
+            echo "attempt $i -> HTTP $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 10
+          done
+          echo "backend did not return 200 after 3 attempts"
+          exit 1
