@@ -7,7 +7,11 @@ import {
   generateFundraisingOffer,
   isRoundAvailable,
 } from "../fundraising";
-import { SEED_MRR_THRESHOLD } from "../constants";
+import {
+  SEED_MRR_THRESHOLD,
+  SERIES_A_MRR_THRESHOLD,
+  SERIES_B_MRR_THRESHOLD,
+} from "../constants";
 import type { GameState } from "../types";
 
 function freshState(): GameState {
@@ -50,6 +54,21 @@ describe("generateFundraisingOffer (FE-17)", () => {
 
     expect(isRoundAvailable("Seed", belowThreshold)).toBe(false);
     expect(isRoundAvailable("Seed", atThreshold)).toBe(true);
+  });
+
+  it("Phase 2 rounds gate correctly: Friends & Family early, Series A/B need more MRR", () => {
+    const m = freshState().metrics;
+    expect(isRoundAvailable("FriendsFamily", m)).toBe(true); // earliest, week 1
+    expect(isRoundAvailable("SeriesA", { ...m, mrr: SERIES_A_MRR_THRESHOLD - 1 })).toBe(false);
+    expect(isRoundAvailable("SeriesA", { ...m, mrr: SERIES_A_MRR_THRESHOLD })).toBe(true);
+    expect(isRoundAvailable("SeriesB", { ...m, mrr: SERIES_B_MRR_THRESHOLD - 1 })).toBe(false);
+    expect(isRoundAvailable("SeriesB", { ...m, mrr: SERIES_B_MRR_THRESHOLD })).toBe(true);
+    // Later rounds write bigger checks than earlier ones at the same metrics.
+    const rich = { ...m, mrr: SERIES_B_MRR_THRESHOLD, customerCount: 800 };
+    const mods = freshState().company.founderModifiers;
+    const seed = generateFundraisingOffer("Seed", rich, mods);
+    const seriesB = generateFundraisingOffer("SeriesB", rich, mods);
+    expect(seriesB.offeredCash).toBeGreaterThan(seed.offeredCash);
   });
 
   it("sets status pending and week from metrics", () => {

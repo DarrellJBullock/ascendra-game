@@ -17,6 +17,10 @@ export function buildRunSummary(state: GameState): string {
   const outcome =
     state.gameStatus === "success"
       ? "WON ($1M valuation)"
+      : state.gameStatus === "acquired"
+        ? "WON (acquired)"
+        : state.gameStatus === "lifestyle"
+          ? "WON (lifestyle business)"
       : state.gameStatus === "bankrupt"
         ? "BANKRUPT"
         : "in progress (quit)";

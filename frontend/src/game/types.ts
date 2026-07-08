@@ -12,7 +12,15 @@
 //   - `Industry` is already threaded through Company/context-building, even
 //     though v1's financial math doesn't consult it yet (architecture.md Section 4).
 
-export type Industry = "AI" | "Fintech" | "Ecommerce";
+export type Industry =
+  | "AI"
+  | "Fintech"
+  | "Ecommerce"
+  | "Healthcare"
+  | "Cybersecurity"
+  | "Gaming"
+  | "Education"
+  | "Developer Tools";
 
 export type FounderType =
   | "Engineer"
@@ -104,7 +112,13 @@ export interface EventLogRecord {
 }
 
 /** Bootstrap/Angel/Seed in v1; union grows in Phase 2 (see file header). */
-export type FundraisingRoundType = "Bootstrap" | "Angel" | "Seed";
+export type FundraisingRoundType =
+  | "Bootstrap"
+  | "FriendsFamily"
+  | "Angel"
+  | "Seed"
+  | "SeriesA"
+  | "SeriesB";
 
 export interface FundraisingOffer {
   id: string;
@@ -206,7 +220,10 @@ export interface GameState {
    * so pre-feature saves deserialize; read sites default to `[]`.
    */
   employees?: Employee[];
-  gameStatus: "in_progress" | "bankrupt" | "success";
+  // Phase 2 added two player-chosen exit wins: "acquired" (take an acquisition
+  // offer) and "lifestyle" (settle as a sustainable, profitable business),
+  // alongside the automatic "success" ($1M valuation) and "bankrupt" end states.
+  gameStatus: "in_progress" | "bankrupt" | "success" | "acquired" | "lifestyle";
   /**
    * Non-null between "an Engineering event rolled this week" and "the player
    * has chosen a resolution for it." Additive field (Epic B/C, TE-7) — see

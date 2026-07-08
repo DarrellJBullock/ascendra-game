@@ -30,7 +30,16 @@ describe("starting stats are identical across industries (Feature 1 AC #4)", () 
     }
   });
 
-  it("exposes exactly 3 industries in v1", () => {
-    expect(INDUSTRY_OPTIONS).toEqual(["AI", "Fintech", "Ecommerce"]);
+  it("exposes the full industry roster (Phase 2 added 5)", () => {
+    expect(INDUSTRY_OPTIONS).toEqual([
+      "AI",
+      "Fintech",
+      "Ecommerce",
+      "Healthcare",
+      "Cybersecurity",
+      "Gaming",
+      "Education",
+      "Developer Tools",
+    ]);
   });
 });

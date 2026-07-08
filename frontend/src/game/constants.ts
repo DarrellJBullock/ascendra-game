@@ -102,6 +102,18 @@ export const PRODUCT_QUALITY_START = 50;
  * suggested example threshold. */
 export const SEED_MRR_THRESHOLD = 5_000; // kept — verified via tuningSim.ts
 
+/** Phase 2 — later-round MRR gates. Series A/B require progressively more
+ * traction than Seed. PLACEHOLDER — not yet through a balance pass. */
+export const SERIES_A_MRR_THRESHOLD = 20_000;
+export const SERIES_B_MRR_THRESHOLD = 50_000;
+
+/** Phase 2 — endgame exits. An acquisition offer becomes available once the
+ * company is valued at/above this, and pays a premium on the current valuation.
+ * Below the $1M "Success" line so taking it is a real "exit now vs. hold out"
+ * choice. PLACEHOLDER levers. */
+export const ACQUISITION_MIN_VALUATION = 400_000;
+export const ACQUISITION_PREMIUM = 1.2;
+
 /** Valuation threshold for the v1 "Success" end state. */
 export const SUCCESS_VALUATION_THRESHOLD = 1_000_000; // per spec, not a tuning knob
 

@@ -13,7 +13,11 @@
 // NOT add new shared constants; every fundraising-specific tuning lever
 // lives right here instead, clearly marked below.
 
-import { SEED_MRR_THRESHOLD } from "./constants";
+import {
+  SEED_MRR_THRESHOLD,
+  SERIES_A_MRR_THRESHOLD,
+  SERIES_B_MRR_THRESHOLD,
+} from "./constants";
 import type {
   FounderModifiers,
   FundraisingOffer,
@@ -35,11 +39,15 @@ const VALUATION_PER_CUSTOMER = 200; // PLACEHOLDER
 /** Floor valuation for a very early, pre-revenue company (keeps Angel offers non-zero). */
 const MIN_IMPLIED_VALUATION = 50_000; // PLACEHOLDER
 
-/** Fraction of implied valuation offered as cash, per round type. */
+/** Fraction of implied valuation offered as cash, per round type. Later rounds
+ * write bigger checks (Phase 2 added FriendsFamily / SeriesA / SeriesB). */
 const CASH_FRACTION_BY_ROUND: Record<FundraisingRoundType, number> = {
   Bootstrap: 0,
+  FriendsFamily: 0.03,
   Angel: 0.05,
   Seed: 0.15,
+  SeriesA: 0.2,
+  SeriesB: 0.22,
 };
 
 /** Equity ask = offeredCash / impliedValuation, clamped to a sane per-round band. */
@@ -48,8 +56,11 @@ const EQUITY_PCT_BOUNDS_BY_ROUND: Record<
   { min: number; max: number }
 > = {
   Bootstrap: { min: 0, max: 0 },
+  FriendsFamily: { min: 2, max: 10 },
   Angel: { min: 5, max: 20 },
   Seed: { min: 8, max: 25 },
+  SeriesA: { min: 12, max: 30 },
+  SeriesB: { min: 10, max: 28 },
 };
 
 let offerIdCounter = 0;
@@ -69,8 +80,11 @@ export function isRoundAvailable(
   metrics: GameMetrics,
 ): boolean {
   if (roundType === "Bootstrap") return true;
+  if (roundType === "FriendsFamily") return true; // earliest, from Week 1
   if (roundType === "Angel") return true;
   if (roundType === "Seed") return metrics.mrr >= SEED_MRR_THRESHOLD;
+  if (roundType === "SeriesA") return metrics.mrr >= SERIES_A_MRR_THRESHOLD;
+  if (roundType === "SeriesB") return metrics.mrr >= SERIES_B_MRR_THRESHOLD;
   return false;
 }
 

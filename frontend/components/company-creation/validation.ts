@@ -45,7 +45,16 @@ export function isStartEnabled(
 
 // Phase-2 seam: built as a plain array (not a 3-branch switch) so Phase 2's
 // additional industries are additive, not a structural rewrite.
-export const INDUSTRY_OPTIONS: Industry[] = ["AI", "Fintech", "Ecommerce"];
+export const INDUSTRY_OPTIONS: Industry[] = [
+  "AI",
+  "Fintech",
+  "Ecommerce",
+  "Healthcare",
+  "Cybersecurity",
+  "Gaming",
+  "Education",
+  "Developer Tools",
+];
 
 export const FOUNDER_TYPE_OPTIONS: { value: FounderType; label: string }[] = [
   { value: "Engineer", label: "Engineer" },

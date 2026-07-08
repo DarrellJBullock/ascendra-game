@@ -20,7 +20,11 @@ export interface FallbackEventTemplate {
 
 type SeverityBank = Record<SeverityBand, FallbackEventTemplate[]>;
 
-type TemplateBank = Record<Industry, Record<SeverityBand, FallbackEventTemplate[]>>;
+// Partial: only the original three industries have bespoke engineering banks.
+// Industries added in Phase 2 (Healthcare, Cybersecurity, Gaming, Education,
+// Developer Tools) fall back to GENERIC_ENGINEERING below — their real AI
+// narratives are still industry-aware (the AI prompt gets the industry).
+type TemplateBank = Partial<Record<Industry, SeverityBank>>;
 
 const FALLBACK_EVENT_TEMPLATES: TemplateBank = {
   AI: {
@@ -567,11 +571,124 @@ const PEOPLE_TEMPLATES: SeverityBank = {
   ],
 };
 
+// Industry-agnostic engineering incidents, used for any industry without a
+// bespoke bank (the Phase-2 additions). Genuine content, not a degraded state.
+const GENERIC_ENGINEERING: SeverityBank = {
+  low: [
+    {
+      narrative:
+        "A flaky integration test has been failing intermittently for a week, and the team has started re-running CI until it passes rather than fixing the root cause.",
+      choices: [
+        {
+          label: "Keep re-running CI for now",
+          description: "Costs nothing today, but the team's trust in the test suite keeps eroding.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 3, customerCountDelta: 0 },
+        },
+        {
+          label: "Track down and fix the flaky test",
+          description: "A bit of engineering time now, but CI becomes trustworthy again.",
+          consequences: { cashDelta: -1500, technicalDebtDelta: -5, customerCountDelta: 0 },
+        },
+      ],
+    },
+    {
+      narrative:
+        "A dependency you rely on shipped a minor breaking change, and a small feature has been quietly throwing errors for a subset of users.",
+      choices: [
+        {
+          label: "Pin the old version and move on",
+          description: "Fast and cheap, but you're now stuck on an aging dependency.",
+          consequences: { cashDelta: -300, technicalDebtDelta: 3, customerCountDelta: 0 },
+        },
+        {
+          label: "Upgrade properly and adapt the code",
+          description: "More effort now, but you stay current and the errors stop.",
+          consequences: { cashDelta: -2000, technicalDebtDelta: -4, customerCountDelta: 0 },
+        },
+      ],
+    },
+  ],
+  moderate: [
+    {
+      narrative:
+        "A slow database query is degrading page loads during peak hours, and a few customers have mentioned the app feeling sluggish.",
+      choices: [
+        {
+          label: "Add a quick caching layer",
+          description: "Speeds things up fast, but caches mask the underlying query problem.",
+          consequences: { cashDelta: -1500, technicalDebtDelta: 6, customerCountDelta: -1 },
+        },
+        {
+          label: "Profile and optimize the query properly",
+          description: "Takes real time, but performance is genuinely fixed at the source.",
+          consequences: { cashDelta: -7000, technicalDebtDelta: -9, customerCountDelta: 1 },
+        },
+        {
+          label: "Ignore it for now",
+          description: "Free, but the sluggishness keeps nudging a few customers toward the exit.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 4, customerCountDelta: -6 },
+        },
+      ],
+    },
+    {
+      narrative:
+        "A background job queue is backing up under load, delaying important notifications and reports by hours.",
+      choices: [
+        {
+          label: "Bump the worker count as a stopgap",
+          description: "Clears the backlog cheaply, but the queue architecture is still fragile.",
+          consequences: { cashDelta: -1200, technicalDebtDelta: 6, customerCountDelta: 0 },
+        },
+        {
+          label: "Re-architect the job pipeline",
+          description: "A real investment, but the queue stops being a recurring fire.",
+          consequences: { cashDelta: -8000, technicalDebtDelta: -10, customerCountDelta: 0 },
+        },
+      ],
+    },
+  ],
+  high: [
+    {
+      narrative:
+        "A bad deploy took the product down for several hours during business hours, and customers are venting publicly while your team scrambles to roll back.",
+      choices: [
+        {
+          label: "Roll back and patch on the old infra",
+          description: "Restores service fast and cheap, but the brittle deploy process stays exactly as risky.",
+          consequences: { cashDelta: -4000, technicalDebtDelta: 13, customerCountDelta: -18 },
+        },
+        {
+          label: "Build a proper CI/CD safety net under fire",
+          description: "Expensive and slow, but genuinely fixes the deploy fragility that caused this.",
+          consequences: { cashDelta: -22000, technicalDebtDelta: -19, customerCountDelta: -7 },
+        },
+      ],
+    },
+    {
+      narrative:
+        "A misconfigured access rule briefly exposed some internal data to the wrong users. Nothing sensitive leaked publicly, but it's a genuine scare and word is spreading internally.",
+      choices: [
+        {
+          label: "Lock it down and issue a quiet fix",
+          description: "Contains the exposure cheaply, but the broader access-control gaps go unaddressed.",
+          consequences: { cashDelta: -5000, technicalDebtDelta: 11, customerCountDelta: -22 },
+        },
+        {
+          label: "Full access-control audit and hardening",
+          description: "Costly and slow, but closes the whole class of misconfiguration and rebuilds trust.",
+          consequences: { cashDelta: -32000, technicalDebtDelta: -23, customerCountDelta: -12 },
+        },
+      ],
+    },
+  ],
+};
+
 /**
  * Selects one fallback template for the given category + industry + severity.
- * Engineering templates are industry-specific; Investor/People are
- * industry-agnostic. Variant choice is arbitrary (Math.random by default); an
- * optional `rand` fn (returning [0,1)) enables deterministic selection in tests.
+ * Engineering uses the industry-specific bank when one exists, else the generic
+ * engineering bank; Investor/People are industry-agnostic. Variant choice is
+ * arbitrary (Math.random by default); an optional `rand` fn enables
+ * deterministic selection in tests.
  */
 export function selectFallbackEvent(
   trigger: EventTrigger,
@@ -584,9 +701,9 @@ export function selectFallbackEvent(
       ? INVESTOR_TEMPLATES[severityBand]
       : trigger === "people"
         ? PEOPLE_TEMPLATES[severityBand]
-        : FALLBACK_EVENT_TEMPLATES[industry][severityBand];
+        : (FALLBACK_EVENT_TEMPLATES[industry] ?? GENERIC_ENGINEERING)[severityBand];
   const index = Math.floor(rand() * variants.length) % variants.length;
   return variants[index];
 }
 
-export { FALLBACK_EVENT_TEMPLATES, INVESTOR_TEMPLATES, PEOPLE_TEMPLATES };
+export { FALLBACK_EVENT_TEMPLATES, GENERIC_ENGINEERING, INVESTOR_TEMPLATES, PEOPLE_TEMPLATES };

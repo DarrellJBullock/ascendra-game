@@ -20,6 +20,7 @@ import { EndScreen } from "@/components/endstates/EndScreen";
 import FundraisingPanel from "@/components/fundraising/FundraisingPanel";
 import ProductPanel from "@/components/product/ProductPanel";
 import TeamPanel from "@/components/team/TeamPanel";
+import ExitsBanner from "@/components/exits/ExitsBanner";
 import CopyRunButton from "@/components/playtest/CopyRunButton";
 import { Wordmark } from "@/components/brand/Wordmark";
 
@@ -65,7 +66,7 @@ export default function PlayPage() {
     return null;
   }
 
-  if (state.gameStatus === "bankrupt" || state.gameStatus === "success") {
+  if (state.gameStatus !== "in_progress") {
     return <EndScreen status={state.gameStatus} state={state} />;
   }
 
@@ -154,6 +155,8 @@ export default function PlayPage() {
             </span>
           </div>
         )}
+
+        <ExitsBanner />
 
         <MetricsPanel metrics={state.metrics} previous={previous} />
 

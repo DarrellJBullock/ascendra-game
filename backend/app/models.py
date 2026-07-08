@@ -10,7 +10,16 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
-Industry = Literal["AI", "Fintech", "Ecommerce"]
+Industry = Literal[
+    "AI",
+    "Fintech",
+    "Ecommerce",
+    "Healthcare",
+    "Cybersecurity",
+    "Gaming",
+    "Education",
+    "Developer Tools",
+]
 FounderType = Literal[
     "Engineer",
     "ProductManager",

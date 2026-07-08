@@ -14,16 +14,44 @@ import { Wordmark } from "@/components/brand/Wordmark";
 import CopyRunButton from "@/components/playtest/CopyRunButton";
 
 export interface EndScreenProps {
-  status: "bankrupt" | "success";
+  status: "bankrupt" | "success" | "acquired" | "lifestyle";
   state: GameState;
 }
 
 export function EndScreen({ status, state }: EndScreenProps) {
   const router = useRouter();
   const reset = useGameStore((s) => s.reset);
-  const isSuccess = status === "success";
-  const accent = isSuccess ? "var(--good)" : "var(--crit)";
-  const soft = isSuccess ? "var(--good-soft)" : "var(--crit-soft)";
+  const isWin = status !== "bankrupt";
+  const accent = isWin ? "var(--good)" : "var(--crit)";
+  const soft = isWin ? "var(--good-soft)" : "var(--crit-soft)";
+
+  const OUTCOME: Record<EndScreenProps["status"], { icon: string; eyebrow: string; title: string; message: string }> = {
+    success: {
+      icon: "🏆",
+      eyebrow: "Exit reached",
+      title: "$1M valuation reached",
+      message: `${state.company.name} hit a $1,000,000 valuation in week ${state.metrics.week}. That's the win.`,
+    },
+    acquired: {
+      icon: "🤝",
+      eyebrow: "Acquired",
+      title: "You sold the company",
+      message: `${state.company.name} was acquired in week ${state.metrics.week}, at a ${formatCurrency(state.metrics.valuation)} valuation. A clean exit.`,
+    },
+    lifestyle: {
+      icon: "🌴",
+      eyebrow: "Sustainable business",
+      title: "A profitable, lasting company",
+      message: `${state.company.name} became a self-sustaining, profitable business by week ${state.metrics.week}. Not every win is a billion-dollar exit.`,
+    },
+    bankrupt: {
+      icon: "💀",
+      eyebrow: "Game over",
+      title: "Out of cash",
+      message: `${state.company.name} ran out of runway in week ${state.metrics.week}. The burn caught up.`,
+    },
+  };
+  const outcome = OUTCOME[status];
 
   function handleNewGame() {
     clearGameState();
@@ -51,20 +79,16 @@ export function EndScreen({ status, state }: EndScreenProps) {
             style={{ background: soft, color: accent, border: `1px solid color-mix(in srgb, ${accent} 40%, transparent)` }}
             aria-hidden
           >
-            {isSuccess ? "🏆" : "💀"}
+            {outcome.icon}
           </span>
           <div>
-            <span className="eyebrow" style={{ color: accent }}>
-              {isSuccess ? "Exit reached" : "Game over"}
-            </span>
+            <span className="eyebrow" style={{ color: accent }}>{outcome.eyebrow}</span>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight" style={{ color: "var(--ink)" }}>
-              {isSuccess ? "$1M valuation reached" : "Out of cash"}
+              {outcome.title}
             </h1>
           </div>
           <p className="max-w-sm text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            {isSuccess
-              ? `${state.company.name} hit a $1,000,000 valuation in week ${state.metrics.week}. That's the win.`
-              : `${state.company.name} ran out of runway in week ${state.metrics.week}. The burn caught up.`}
+            {outcome.message}
           </p>
         </div>
 

@@ -18,7 +18,22 @@ import {
 import { formatCurrency } from "@/components/dashboard/formatters";
 import type { FundraisingRoundType } from "@/src/game/types";
 
-const ROUND_OPTIONS: FundraisingRoundType[] = ["Angel", "Seed"];
+const ROUND_OPTIONS: FundraisingRoundType[] = [
+  "FriendsFamily",
+  "Angel",
+  "Seed",
+  "SeriesA",
+  "SeriesB",
+];
+
+const ROUND_LABEL: Record<FundraisingRoundType, string> = {
+  Bootstrap: "Bootstrap",
+  FriendsFamily: "Friends & Family",
+  Angel: "Angel",
+  Seed: "Seed",
+  SeriesA: "Series A",
+  SeriesB: "Series B",
+};
 
 export default function FundraisingPanel() {
   const state = useGameStore((s) => s.state);
@@ -77,7 +92,7 @@ export default function FundraisingPanel() {
           <div className="rounded-xl p-4" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold" style={{ color: "var(--ink)" }}>
-                {pendingOffer.roundType} round
+                {ROUND_LABEL[pendingOffer.roundType]} round
               </span>
               <span className="pill pill-muted">offer on the table</span>
             </div>
@@ -112,7 +127,7 @@ export default function FundraisingPanel() {
           className="rounded-xl px-3 py-3 text-xs leading-relaxed"
           style={{ background: "var(--surface-2)", color: "var(--ink-3)", border: "1px solid var(--border)" }}
         >
-          You already {resolvedThisWeek.status} a {resolvedThisWeek.roundType} offer this week. Come
+          You already {resolvedThisWeek.status} a {ROUND_LABEL[resolvedThisWeek.roundType]} offer this week. Come
           back next week.
         </p>
       ) : (
@@ -129,8 +144,8 @@ export default function FundraisingPanel() {
                   aria-pressed={selectedRound === round}
                   className="chip px-3 py-2.5 text-sm font-medium"
                 >
-                  {round}
-                  {!available && round === "Seed" ? " 🔒" : ""}
+                  {ROUND_LABEL[round]}
+                  {!available ? " 🔒" : ""}
                 </button>
               );
             })}
@@ -143,9 +158,9 @@ export default function FundraisingPanel() {
           >
             Attempt raise
           </button>
-          {!isRoundAvailable("Seed", state.metrics) && (
+          {ROUND_OPTIONS.some((r) => !isRoundAvailable(r, state.metrics)) && (
             <p className="text-[11px]" style={{ color: "var(--ink-3)" }}>
-              Seed unlocks once you reach the MRR threshold.
+              Later rounds (🔒) unlock as your MRR grows.
             </p>
           )}
         </div>

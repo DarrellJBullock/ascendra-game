@@ -22,6 +22,11 @@ const INDUSTRY_BLURB: Record<Industry, string> = {
   AI: "Fast-moving, technical, infra-heavy.",
   Fintech: "Regulated, high-trust, enterprise buyers.",
   Ecommerce: "Consumer-facing, growth and margin driven.",
+  Healthcare: "Compliance-bound, slow sales, high stakes.",
+  Cybersecurity: "Trust-critical, technical, breach-averse.",
+  Gaming: "Viral swings, community-driven, hit-or-miss.",
+  Education: "Budget-cycle buyers, mission-led, sticky.",
+  "Developer Tools": "Bottoms-up adoption, technical champions.",
 };
 
 export function CompanyCreationForm() {

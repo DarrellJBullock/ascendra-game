@@ -9,7 +9,7 @@ describe("fallback event template bank (CT-1)", () => {
   it("has at least 2 variants for every (industry x severity) combo", () => {
     for (const industry of INDUSTRIES) {
       for (const severity of SEVERITIES) {
-        const variants = FALLBACK_EVENT_TEMPLATES[industry][severity];
+        const variants = FALLBACK_EVENT_TEMPLATES[industry]![severity];
         expect(variants.length).toBeGreaterThanOrEqual(2);
       }
     }
@@ -18,7 +18,7 @@ describe("fallback event template bank (CT-1)", () => {
   it("every template has non-empty narrative and 2-3 choices with full consequence shape", () => {
     for (const industry of INDUSTRIES) {
       for (const severity of SEVERITIES) {
-        for (const template of FALLBACK_EVENT_TEMPLATES[industry][severity]) {
+        for (const template of FALLBACK_EVENT_TEMPLATES[industry]![severity]) {
           expect(template.narrative.length).toBeGreaterThan(10);
           expect(template.choices.length).toBeGreaterThanOrEqual(2);
           expect(template.choices.length).toBeLessThanOrEqual(3);
@@ -44,7 +44,7 @@ describe("fallback event template bank (CT-1)", () => {
   });
 
   it("selectFallbackEvent picks different variants for different rand values", () => {
-    const variants = FALLBACK_EVENT_TEMPLATES.Fintech.moderate;
+    const variants = FALLBACK_EVENT_TEMPLATES.Fintech!.moderate;
     const first = selectFallbackEvent("engineering", "Fintech", "moderate", () => 0);
     const last = selectFallbackEvent("engineering", "Fintech", "moderate", () => 0.999);
     expect(first).toEqual(variants[0]);
