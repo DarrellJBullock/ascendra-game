@@ -29,6 +29,8 @@ import AdvisorButton from "@/components/advisor/AdvisorButton";
 import BoardButton from "@/components/board/BoardButton";
 import NewsButton from "@/components/news/NewsButton";
 import SalesPipelineButton from "@/components/sales/SalesPipelineButton";
+import ThemeToggle from "@/components/ui/ThemeToggle";
+import Celebrations from "@/components/ui/Celebrations";
 import CopyRunButton from "@/components/playtest/CopyRunButton";
 import { Wordmark } from "@/components/brand/Wordmark";
 
@@ -116,6 +118,7 @@ export default function PlayPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <span
               className="rounded-full px-3 py-1.5 text-xs font-semibold"
               style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--ink-2)" }}
@@ -133,6 +136,8 @@ export default function PlayPage() {
           </div>
         </div>
       </header>
+
+      <Celebrations />
 
       <main className="anim-fade-up mx-auto flex w-full max-w-6xl flex-col gap-5 px-6 py-6">
         {/* Goal meter */}

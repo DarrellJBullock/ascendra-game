@@ -10,6 +10,7 @@
 
 import type { ReactNode } from "react";
 
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import type { GameMetrics } from "@/src/game/types";
 import { LOW_RUNWAY_WARNING_WEEKS } from "@/src/game/constants";
 import {
@@ -59,7 +60,7 @@ function Tile({
   accent,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   warn?: boolean;
   delta?: ReactNode;
   accent?: boolean;
@@ -102,19 +103,19 @@ export function MetricsPanel({ metrics, previous }: MetricsPanelProps) {
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       <Tile
         label="Cash"
-        value={formatCurrency(metrics.cash)}
+        value={<AnimatedNumber value={metrics.cash} format={formatCurrency} />}
         accent
         delta={<Delta current={metrics.cash} prev={p?.cash} goodWhenUp fmt="currency" />}
       />
       <Tile
         label="MRR"
-        value={formatCurrency(metrics.mrr)}
+        value={<AnimatedNumber value={metrics.mrr} format={formatCurrency} />}
         accent
         delta={<Delta current={metrics.mrr} prev={p?.mrr} goodWhenUp fmt="currency" />}
       />
       <Tile
         label="Valuation"
-        value={formatCurrency(metrics.valuation)}
+        value={<AnimatedNumber value={metrics.valuation} format={formatCurrency} className="text-gradient" />}
         accent
         delta={<Delta current={metrics.valuation} prev={p?.valuation} goodWhenUp fmt="currency" />}
       />
@@ -133,7 +134,7 @@ export function MetricsPanel({ metrics, previous }: MetricsPanelProps) {
       />
       <Tile
         label="Customers"
-        value={formatNumber(metrics.customerCount)}
+        value={<AnimatedNumber value={metrics.customerCount} format={formatNumber} />}
         delta={
           <Delta current={metrics.customerCount} prev={p?.customerCount} goodWhenUp fmt="number" />
         }
