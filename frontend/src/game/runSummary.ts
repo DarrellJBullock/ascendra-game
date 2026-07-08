@@ -6,6 +6,7 @@
 //
 // This is playtest scaffolding; safe to remove after QA-2 if desired.
 
+import { DEFAULT_SEGMENT_MIX, SEGMENTS, blendedPrice } from "./segments";
 import type { GameState } from "./types";
 
 function money(v: number): string {
@@ -38,6 +39,8 @@ export function buildRunSummary(state: GameState): string {
       `Customers ${m.customerCount} · Tech debt ${Math.round(m.technicalDebt)}`,
     `Quality ${Math.round(m.productQuality)} · Innovation ${m.innovation} · ` +
       `Team ${m.teamSize} (${employees.length} hires) · Founder ownership ${m.founderOwnershipPct.toFixed(1)}%`,
+    `Segment focus: ${SEGMENTS[state.segmentFocus ?? "smb"].label} · ` +
+      `Rev/customer ${money(blendedPrice(m.segmentMix ?? DEFAULT_SEGMENT_MIX))}`,
     `Product actions: ${productActions.length} · Team changes: ${teamActions.length} · ` +
       `Fundraises accepted: ${acceptedRaises}/${raises.length}`,
     `Events faced: ${state.eventLog.length}`,

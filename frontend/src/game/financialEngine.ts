@@ -10,7 +10,7 @@
 // old per-head rate — so a solo founder's burn is byte-identical to the tuned
 // baseline.
 
-import { BASE_PRICE_PER_CUSTOMER, FIXED_WEEKLY_EXPENSE } from "./constants";
+import { FIXED_WEEKLY_EXPENSE } from "./constants";
 import type { GameMetrics } from "./types";
 
 /** Result of one week's financial calc, before growth/churn/debt/valuation run. */
@@ -21,17 +21,30 @@ export interface FinancialStepResult {
 }
 
 /**
+ * Phase 3 — Customer Segments. Blended per-customer economics the caller
+ * (advanceWeek) derives from the segment mix. At an all-SMB mix these are
+ * `{ pricePerCustomer: BASE_PRICE_PER_CUSTOMER, supportPerCustomer: 0,
+ * expansion: 0 }`, reproducing the tuned single-price economy exactly.
+ */
+export interface SegmentEconomics {
+  pricePerCustomer: number;
+  supportPerCustomer: number;
+  expansion: number; // accrued expansion-revenue multiplier (0..cap)
+}
+
+/**
  * Applies one week of revenue/expense/burn/cash/MRR movement.
- * `payroll` is the total weekly wage bill (founder + employees), computed by the
- * caller (advanceWeek) from the employee roster.
+ * `payroll` is the total weekly wage bill (founder + employees). `seg` carries
+ * blended per-customer price/support/expansion from the segment mix.
  */
 export function applyFinancialEngine(
   metrics: GameMetrics,
   payroll: number,
+  seg: SegmentEconomics,
 ): FinancialStepResult {
-  // BASE_PRICE_PER_CUSTOMER is a flat v1 pricing constant (tuning lever, TE-9).
-  const revenue = metrics.customerCount * BASE_PRICE_PER_CUSTOMER;
-  const expenses = FIXED_WEEKLY_EXPENSE + payroll;
+  const revenue = metrics.customerCount * seg.pricePerCustomer * (1 + seg.expansion);
+  const supportCost = metrics.customerCount * seg.supportPerCustomer;
+  const expenses = FIXED_WEEKLY_EXPENSE + payroll + supportCost;
   const burnRate = expenses - revenue;
   const cash = metrics.cash - burnRate;
   const mrr = revenue; // MRR in v1 is just the current week's revenue rate.

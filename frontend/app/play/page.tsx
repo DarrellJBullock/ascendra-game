@@ -21,6 +21,7 @@ import FundraisingPanel from "@/components/fundraising/FundraisingPanel";
 import ProductPanel from "@/components/product/ProductPanel";
 import TeamPanel from "@/components/team/TeamPanel";
 import ExitsBanner from "@/components/exits/ExitsBanner";
+import SegmentsPanel from "@/components/segments/SegmentsPanel";
 import CopyRunButton from "@/components/playtest/CopyRunButton";
 import { Wordmark } from "@/components/brand/Wordmark";
 
@@ -161,6 +162,8 @@ export default function PlayPage() {
         <MetricsPanel metrics={state.metrics} previous={previous} />
 
         <RevenueChart turnHistory={state.turnHistory} currentMrr={state.metrics.mrr} />
+
+        <SegmentsPanel />
 
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           <ProductPanel />

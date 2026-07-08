@@ -3,6 +3,7 @@
 // Zustand store's `newGame` action (DM-2).
 
 import { PRODUCT_QUALITY_START } from "./constants";
+import { DEFAULT_SEGMENT_MIX } from "./segments";
 import { FOUNDER_MODIFIERS } from "./founderModifiers";
 import type { FounderType, GameState, Industry } from "./types";
 
@@ -45,6 +46,8 @@ export function createNewGameState(input: NewGameInput): GameState {
       founderOwnershipPct: STARTING_FOUNDER_OWNERSHIP_PCT,
       productQuality: PRODUCT_QUALITY_START,
       innovation: 0,
+      segmentMix: { ...DEFAULT_SEGMENT_MIX },
+      segmentExpansion: 0,
     },
     turnHistory: [],
     eventLog: [],
@@ -52,6 +55,7 @@ export function createNewGameState(input: NewGameInput): GameState {
     productActions: [],
     teamActions: [],
     employees: [],
+    segmentFocus: "smb",
     gameStatus: "in_progress",
     pendingEngineeringEvent: null,
     sessionSeed: Math.floor(Math.random() * 0xffffffff),

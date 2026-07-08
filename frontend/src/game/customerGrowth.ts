@@ -22,6 +22,16 @@ export interface CustomerGrowthResult {
   customerCount: number;
 }
 
+/**
+ * Phase 3 — Customer Segments. Blended acquisition/churn multipliers the caller
+ * derives from the segment focus + mix. `{ acquisitionMult: 1, churnMult: 1 }`
+ * (all-SMB, SMB focus) reproduces the tuned growth/churn exactly.
+ */
+export interface SegmentGrowthMods {
+  acquisitionMult: number;
+  churnMult: number;
+}
+
 /** 0..1 proxy: 1 = pristine product, trending toward 0 as debt climbs. */
 function productQualityProxy(technicalDebt: number): number {
   const clampedDebt = Math.max(0, Math.min(100, technicalDebt));
@@ -37,6 +47,7 @@ function qualityGrowthFactor(productQuality: number): number {
 export function applyCustomerGrowthChurn(
   metrics: GameMetrics,
   founderModifiers: FounderModifiers,
+  seg: SegmentGrowthMods = { acquisitionMult: 1, churnMult: 1 },
 ): CustomerGrowthResult {
   const quality = productQualityProxy(metrics.technicalDebt);
   const qFactor = qualityGrowthFactor(metrics.productQuality);
@@ -49,12 +60,14 @@ export function applyCustomerGrowthChurn(
 
   // Product-quality factor applies to gross adds (gained + trickle), not churn —
   // ×1 at quality 50 keeps the tuned baseline unchanged (see file header).
-  const gained = metrics.customerCount * growthRate * qFactor;
-  const churned = metrics.customerCount * churnRate;
+  // Phase 3: segment focus scales acquisition (upmarket = slower); segment mix
+  // scales churn (upmarket = stickier). Both ×1 at the all-SMB default.
+  const gained = metrics.customerCount * growthRate * qFactor * seg.acquisitionMult;
+  const churned = metrics.customerCount * churnRate * seg.churnMult;
 
   // Small constant trickle so a brand-new company (customerCount=0) isn't stuck
   // at zero forever (TE-9-tuned to 4).
-  const seedTrickle = 4 * founderModifiers.customerAcquisitionMult * qFactor;
+  const seedTrickle = 4 * founderModifiers.customerAcquisitionMult * qFactor * seg.acquisitionMult;
 
   const nextCount = Math.max(
     0,

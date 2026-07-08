@@ -70,7 +70,20 @@ export interface GameMetrics {
   // are backfilled to defaults on load (storage.ts normalizeLoadedState).
   productQuality: number;
   innovation: number;
+  // Phase 3 — Customer Segments. `segmentMix` is the fraction of the customer
+  // base in each segment (sums to 1); it drifts toward the player's acquisition
+  // focus. `segmentExpansion` is accrued expansion revenue (0..cap). Both are
+  // NEUTRAL at the all-SMB default (SMB is priced at BASE_PRICE), so a player
+  // who never touches segments plays the byte-identical tuned economy. Optional
+  // for save-compat; defaulted by the factory + storage normalizer + engine.
+  segmentMix?: Record<CustomerSegment, number>;
+  segmentExpansion?: number;
 }
+
+/** Phase 3 — Customer Segments. SMB is the neutral default (priced at the tuned
+ * BASE_PRICE); higher tiers trade slower acquisition for higher price, lower
+ * churn, expansion revenue, and support cost. */
+export type CustomerSegment = "smb" | "midmarket" | "enterprise" | "government";
 
 /**
  * One record appended per completed week; feeds the dashboard's 12-week trend
@@ -225,6 +238,9 @@ export interface GameState {
    * so pre-feature saves deserialize; read sites default to `[]`.
    */
   employees?: Employee[];
+  /** Phase 3 — Customer Segments. The player's current acquisition focus; new
+   * customers pull the segment mix toward it. Defaults to "smb" (neutral). */
+  segmentFocus?: CustomerSegment;
   // Phase 2 added two player-chosen exit wins: "acquired" (take an acquisition
   // offer) and "lifestyle" (settle as a sustainable, profitable business),
   // alongside the automatic "success" ($1M valuation) and "bankrupt" end states.

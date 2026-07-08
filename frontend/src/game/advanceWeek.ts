@@ -52,6 +52,16 @@ import { chooseEventCategory } from "./eventCategory";
 import { checkEndStates } from "./endStates";
 import { deriveWeekSeed } from "./rng";
 import { teamPayroll, teamTotalSkill } from "./team";
+import {
+  DEFAULT_SEGMENT_MIX,
+  EXPANSION_CAP,
+  blendedChurnMult,
+  blendedExpansionRate,
+  blendedPrice,
+  blendedSupport,
+  driftMix,
+  focusAcqMult,
+} from "./segments";
 import type { EventTrigger, GameState, TurnHistoryRecord } from "./types";
 
 /**
@@ -84,16 +94,31 @@ export function advanceWeek(state: GameState, rngSeed?: number): GameState {
   const payroll = teamPayroll(state);
   const totalSkill = teamTotalSkill(state);
 
+  // Phase 3 — Customer Segments. Blended per-customer economics from the current
+  // mix + acquisition focus. All-SMB (the default) yields BASE_PRICE / ×1 churn /
+  // ×1 acquisition / 0 support / 0 expansion, i.e. the exact tuned baseline.
+  const mix = state.metrics.segmentMix ?? DEFAULT_SEGMENT_MIX;
+  const focus = state.segmentFocus ?? "smb";
+  const nextExpansion = Math.min(
+    EXPANSION_CAP,
+    (state.metrics.segmentExpansion ?? 0) + blendedExpansionRate(mix),
+  );
+
   // 1. Financial engine (TE-1)
-  const financial = applyFinancialEngine(state.metrics, payroll);
+  const financial = applyFinancialEngine(state.metrics, payroll, {
+    pricePerCustomer: blendedPrice(mix),
+    supportPerCustomer: blendedSupport(mix),
+    expansion: nextExpansion,
+  });
 
   // 2. Customer growth/churn (TE-2) — uses the START-of-week technicalDebt
   //    (debt drift, step 3, happens after growth so this week's drift
   //    doesn't retroactively affect this week's growth calc) and the current
-  //    productQuality (neutral at 50).
+  //    productQuality (neutral at 50). Segment focus/mix scale acquisition/churn.
   const growth = applyCustomerGrowthChurn(
     state.metrics,
     state.company.founderModifiers,
+    { acquisitionMult: focusAcqMult(focus), churnMult: blendedChurnMult(mix) },
   );
 
   // 3. Technical debt drift (TE-3) — dampened by total team skill.
@@ -110,6 +135,9 @@ export function advanceWeek(state: GameState, rngSeed?: number): GameState {
     burnRate: financial.burnRate,
     customerCount: growth.customerCount,
     technicalDebt,
+    // Segment mix drifts toward the focus for next week; expansion accrues.
+    segmentMix: driftMix(mix, focus),
+    segmentExpansion: nextExpansion,
   };
 
   // 4. Valuation (TE-4) + runway (TE-5)

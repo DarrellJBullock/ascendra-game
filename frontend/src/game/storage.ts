@@ -5,6 +5,7 @@
 // a no-op / returns null when `window` is unavailable.
 
 import { PRODUCT_QUALITY_START } from "./constants";
+import { DEFAULT_SEGMENT_MIX } from "./segments";
 import type { GameState } from "./types";
 
 export const SAVE_KEY = "ascendra:save:v1";
@@ -21,10 +22,13 @@ function normalizeLoadedState(state: GameState): GameState {
       ...state.metrics,
       productQuality: state.metrics.productQuality ?? PRODUCT_QUALITY_START,
       innovation: state.metrics.innovation ?? 0,
+      segmentMix: state.metrics.segmentMix ?? { ...DEFAULT_SEGMENT_MIX },
+      segmentExpansion: state.metrics.segmentExpansion ?? 0,
     },
     productActions: state.productActions ?? [],
     teamActions: state.teamActions ?? [],
     employees: state.employees ?? [],
+    segmentFocus: state.segmentFocus ?? "smb",
     fundraisingOffers: state.fundraisingOffers ?? [],
   };
 }
