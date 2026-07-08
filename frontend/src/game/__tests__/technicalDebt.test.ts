@@ -7,27 +7,25 @@ import { applyTechnicalDebtDrift } from "@/src/game/technicalDebt";
 const mods = createNewGameState({ name: "Acme", industry: "AI", founderType: "Engineer" }).company
   .founderModifiers;
 
-describe("technical debt drift + team damping (Phase 2)", () => {
-  it("solo founder (teamSize 1) accrues debt — the tuned baseline", () => {
-    const next = applyTechnicalDebtDrift(20, mods, 1);
-    expect(next).toBeGreaterThan(20);
+describe("technical debt drift + team-skill damping (Phase 2)", () => {
+  it("no team (skill 0) accrues debt — the tuned baseline", () => {
+    expect(applyTechnicalDebtDrift(20, mods, 0)).toBeGreaterThan(20);
   });
 
-  it("more engineers dampen the weekly drift (monotonically)", () => {
+  it("more team skill dampens the weekly drift (monotonically)", () => {
+    const at0 = applyTechnicalDebtDrift(20, mods, 0);
     const at1 = applyTechnicalDebtDrift(20, mods, 1);
     const at2 = applyTechnicalDebtDrift(20, mods, 2);
-    const at3 = applyTechnicalDebtDrift(20, mods, 3);
-    expect(at2).toBeLessThan(at1);
-    expect(at3).toBeLessThanOrEqual(at2);
+    expect(at1).toBeLessThan(at0);
+    expect(at2).toBeLessThanOrEqual(at1);
   });
 
-  it("a large team halts drift but never reverses it (no active paydown)", () => {
-    const next = applyTechnicalDebtDrift(20, mods, 10);
-    expect(next).toBe(20); // fully damped to zero drift, not below
+  it("high skill halts drift but never reverses it (no active paydown)", () => {
+    expect(applyTechnicalDebtDrift(20, mods, 10)).toBe(20); // fully damped to zero drift
   });
 
   it("still clamps to the 0-100 scale", () => {
-    expect(applyTechnicalDebtDrift(99.5, mods, 1)).toBeLessThanOrEqual(100);
+    expect(applyTechnicalDebtDrift(99.5, mods, 0)).toBeLessThanOrEqual(100);
     expect(applyTechnicalDebtDrift(0, mods, 10)).toBeGreaterThanOrEqual(0);
   });
 });

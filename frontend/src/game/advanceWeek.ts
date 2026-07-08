@@ -50,6 +50,7 @@ import { computeRunwayWeeks } from "./runway";
 import { rollEngineeringEvent } from "./engineeringEvent";
 import { checkEndStates } from "./endStates";
 import { deriveWeekSeed } from "./rng";
+import { teamPayroll, teamTotalSkill } from "./team";
 import type { GameState, TurnHistoryRecord } from "./types";
 
 /**
@@ -75,22 +76,30 @@ export function advanceWeek(state: GameState, rngSeed?: number): GameState {
     return state;
   }
 
+  // Phase 2 team inputs: payroll (founder + employees) and total skill drive
+  // the financial and debt steps below. With no employees these equal the
+  // tuned baseline (founder-only payroll, zero skill), so a non-hiring game is
+  // byte-identical to before.
+  const payroll = teamPayroll(state);
+  const totalSkill = teamTotalSkill(state);
+
   // 1. Financial engine (TE-1)
-  const financial = applyFinancialEngine(state.metrics);
+  const financial = applyFinancialEngine(state.metrics, payroll);
 
   // 2. Customer growth/churn (TE-2) — uses the START-of-week technicalDebt
   //    (debt drift, step 3, happens after growth so this week's drift
-  //    doesn't retroactively affect this week's growth calc).
+  //    doesn't retroactively affect this week's growth calc) and the current
+  //    productQuality (neutral at 50).
   const growth = applyCustomerGrowthChurn(
     state.metrics,
     state.company.founderModifiers,
   );
 
-  // 3. Technical debt drift (TE-3)
+  // 3. Technical debt drift (TE-3) — dampened by total team skill.
   const technicalDebt = applyTechnicalDebtDrift(
     state.metrics.technicalDebt,
     state.company.founderModifiers,
-    state.metrics.teamSize,
+    totalSkill,
   );
 
   const metricsAfterCore = {

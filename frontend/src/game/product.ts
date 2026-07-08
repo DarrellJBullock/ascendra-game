@@ -1,103 +1,55 @@
-// Phase 2 — Product Management (pure logic).
+// Phase 2 — Product Management (pure logic), deeper version.
 //
-// Gives the player direct control over the product each week: grow it (ship a
-// feature), pay down technical debt (refactor / fix bugs), rather than only
-// reacting to debt via Engineering events. At most ONE product focus per week,
-// mirroring the once-per-week fundraising cadence, so it's a real weekly
-// decision alongside "Advance Week" and "Fundraise".
+// The weekly product focus is now one of: ship a feature (a named release —
+// grows customers, raises product quality + innovation, adds some debt),
+// refactor (heavy debt paydown + quality), or fix bugs (cheap debt paydown +
+// quality). Product quality drives customer growth (see customerGrowth.ts);
+// innovation is a cumulative count of features shipped. At most ONE product
+// action per week.
 //
-// Effects are applied immediately to cash / technicalDebt / customerCount (the
-// same levers the turn engine and events already use — no new stat types). MRR
-// and valuation are NOT touched here: the financial engine re-derives MRR from
-// customerCount each week, so a customer bump flows through on the next
-// Advance Week (keeping the engine the single source of truth for revenue).
+// Effects apply immediately to cash / technicalDebt / customerCount /
+// productQuality / innovation. Revenue re-derives from customerCount each week
+// (engine is the source of truth), so a feature's customer bump flows into MRR
+// on the next Advance Week.
 //
-// PLACEHOLDER economics: costs/effects below are sized as real runway decisions
-// against the tuned economy ($100k start, ~$5.2k/wk burn, debt on a 0-100
-// scale) but have NOT been through a formal balance pass — they're a documented
-// lever for a future tuning pass, like constants.ts.
+// DEFERRED within Product (future): a multi-week feature BUILD queue (features
+// ship instantly here) and an explicit named-bug backlog (bugs stay modeled via
+// technical debt). PLACEHOLDER economics — documented tuning levers.
 
-import type {
-  GameMetrics,
-  GameState,
-  ProductActionRecord,
-  ProductActionType,
-} from "./types";
+import type { GameMetrics, GameState, ProductActionRecord, ProductActionType } from "./types";
 
-export interface ProductActionDef {
-  type: ProductActionType;
+export type FeatureSize = "small" | "major";
+
+export interface FeatureDef {
+  size: FeatureSize;
   label: string;
-  tagline: string;
-  /** Cash cost (spent immediately). */
   cost: number;
-  /** Short "what it does" line for the UI. */
-  effectSummary: string;
+  flatCustomers: number;
+  pctCustomers: number; // fraction of current base added on top
+  qualityGain: number;
+  debtAdded: number;
 }
 
-// --- PLACEHOLDER tuning values (see file header) -----------------------------
-const SHIP_FEATURE_COST = 9_000;
-const SHIP_FEATURE_FLAT_CUSTOMERS = 5; // base gain, meaningful from customerCount=0
-const SHIP_FEATURE_PCT_CUSTOMERS = 0.08; // + a fraction of the current base
-const SHIP_FEATURE_DEBT_ADDED = 5; // shipping fast adds debt
+export const FEATURES: Record<FeatureSize, FeatureDef> = {
+  small: { size: "small", label: "Small feature", cost: 6_000, flatCustomers: 5, pctCustomers: 0.06, qualityGain: 5, debtAdded: 4 },
+  major: { size: "major", label: "Major feature", cost: 14_000, flatCustomers: 12, pctCustomers: 0.1, qualityGain: 10, debtAdded: 9 },
+};
 
-const REFACTOR_COST = 14_000;
-const REFACTOR_DEBT_REMOVED = 18; // heavy, expensive debt paydown
+export const REFACTOR = { cost: 14_000, debtRemoved: 18, qualityGain: 5 };
+export const FIX_BUGS = { cost: 4_000, debtRemoved: 7, qualityGain: 3 };
 
-const FIX_BUGS_COST = 4_000;
-const FIX_BUGS_DEBT_REMOVED = 7; // cheap, smaller debt paydown
-// -----------------------------------------------------------------------------
-
-export const PRODUCT_ACTIONS: ProductActionDef[] = [
-  {
-    type: "ship_feature",
-    label: "Ship a feature",
-    tagline: "Grow the product",
-    cost: SHIP_FEATURE_COST,
-    effectSummary: `+${SHIP_FEATURE_FLAT_CUSTOMERS}+ customers · +${SHIP_FEATURE_DEBT_ADDED} debt`,
-  },
-  {
-    type: "refactor",
-    label: "Refactor",
-    tagline: "Invest in the codebase",
-    cost: REFACTOR_COST,
-    effectSummary: `−${REFACTOR_DEBT_REMOVED} technical debt`,
-  },
-  {
-    type: "fix_bugs",
-    label: "Fix bugs",
-    tagline: "Cheap maintenance",
-    cost: FIX_BUGS_COST,
-    effectSummary: `−${FIX_BUGS_DEBT_REMOVED} technical debt`,
-  },
+const FEATURE_NAMES = [
+  "Realtime dashboard", "SSO integration", "Mobile app", "Bulk export",
+  "Audit log", "API v2", "Smart alerts", "Team workspaces", "Usage analytics",
+  "Dark mode", "Webhooks", "Advanced search", "Custom reports", "Onboarding flow",
 ];
 
-export function getProductAction(type: ProductActionType): ProductActionDef {
-  const def = PRODUCT_ACTIONS.find((a) => a.type === type);
-  if (!def) throw new Error(`Unknown product action: ${type}`);
-  return def;
+function randomFeatureName(): string {
+  return FEATURE_NAMES[Math.floor(Math.random() * FEATURE_NAMES.length)];
 }
 
-/** Raw deltas an action applies, given the current metrics (some scale with
- * the current customer base). Pure — no clamping here (see applyProductAction). */
-function computeDeltas(
-  type: ProductActionType,
-  metrics: GameMetrics,
-): { cashDelta: number; technicalDebtDelta: number; customerCountDelta: number } {
-  switch (type) {
-    case "ship_feature":
-      return {
-        cashDelta: -SHIP_FEATURE_COST,
-        technicalDebtDelta: SHIP_FEATURE_DEBT_ADDED,
-        customerCountDelta:
-          SHIP_FEATURE_FLAT_CUSTOMERS +
-          Math.round(metrics.customerCount * SHIP_FEATURE_PCT_CUSTOMERS),
-      };
-    case "refactor":
-      return { cashDelta: -REFACTOR_COST, technicalDebtDelta: -REFACTOR_DEBT_REMOVED, customerCountDelta: 0 };
-    case "fix_bugs":
-      return { cashDelta: -FIX_BUGS_COST, technicalDebtDelta: -FIX_BUGS_DEBT_REMOVED, customerCountDelta: 0 };
-  }
-}
+const clampDebt = (v: number) => Math.max(0, Math.min(100, v));
+const clampQuality = (v: number) => Math.max(0, Math.min(100, v));
 
 /** True if no product action has been taken yet this week and the game is live. */
 export function canTakeProductActionThisWeek(state: GameState): boolean {
@@ -106,43 +58,77 @@ export function canTakeProductActionThisWeek(state: GameState): boolean {
   return !actions.some((a) => a.week === state.metrics.week);
 }
 
-/** True if the player can afford the given action right now. */
-export function canAffordProductAction(state: GameState, type: ProductActionType): boolean {
-  return state.metrics.cash >= getProductAction(type).cost;
-}
-
-/**
- * Apply a product action: spend the cash, adjust technical debt (clamped 0-100)
- * and customer count (clamped >= 0), and append the record. No-op (returns the
- * same state) if it can't be taken this week or can't be afforded — the UI
- * disables those cases, this is defense in depth.
- */
-export function applyProductAction(state: GameState, type: ProductActionType): GameState {
-  if (!canTakeProductActionThisWeek(state) || !canAffordProductAction(state, type)) {
-    return state;
-  }
-
-  const deltas = computeDeltas(type, state.metrics);
-  const technicalDebt = Math.max(
-    0,
-    Math.min(100, state.metrics.technicalDebt + deltas.technicalDebtDelta),
-  );
-  const customerCount = Math.max(0, state.metrics.customerCount + deltas.customerCountDelta);
-  const cash = state.metrics.cash + deltas.cashDelta;
-
+function apply(
+  state: GameState,
+  action: ProductActionType,
+  next: Partial<Pick<GameMetrics, "cash" | "technicalDebt" | "customerCount" | "productQuality" | "innovation">>,
+  extra: { featureName?: string } = {},
+): GameState {
+  const m = state.metrics;
+  const merged = { ...m, ...next };
   const record: ProductActionRecord = {
-    id: `prod-${state.metrics.week}-${type}-${Math.random().toString(36).slice(2, 8)}`,
-    week: state.metrics.week,
-    action: type,
-    cashDelta: deltas.cashDelta,
-    // record the *effective* debt change after clamping, so the UI note matches
-    technicalDebtDelta: technicalDebt - state.metrics.technicalDebt,
-    customerCountDelta: customerCount - state.metrics.customerCount,
+    id: `prod-${m.week}-${action}-${Math.random().toString(36).slice(2, 8)}`,
+    week: m.week,
+    action,
+    cashDelta: merged.cash - m.cash,
+    technicalDebtDelta: merged.technicalDebt - m.technicalDebt,
+    customerCountDelta: merged.customerCount - m.customerCount,
+    qualityDelta: merged.productQuality - m.productQuality,
+    featureName: extra.featureName,
   };
-
   return {
     ...state,
-    metrics: { ...state.metrics, cash, technicalDebt, customerCount },
+    metrics: merged,
     productActions: [...(state.productActions ?? []), record],
   };
+}
+
+export function canAffordFeature(state: GameState, size: FeatureSize): boolean {
+  return state.metrics.cash >= FEATURES[size].cost;
+}
+export function canAffordRefactor(state: GameState): boolean {
+  return state.metrics.cash >= REFACTOR.cost;
+}
+export function canAffordFix(state: GameState): boolean {
+  return state.metrics.cash >= FIX_BUGS.cost;
+}
+
+/** Ship a named feature: grows customers + quality + innovation, adds debt. */
+export function shipFeature(state: GameState, size: FeatureSize): GameState {
+  if (!canTakeProductActionThisWeek(state) || !canAffordFeature(state, size)) return state;
+  const f = FEATURES[size];
+  const m = state.metrics;
+  const customerGain = f.flatCustomers + Math.round(m.customerCount * f.pctCustomers);
+  return apply(
+    state,
+    "ship_feature",
+    {
+      cash: m.cash - f.cost,
+      customerCount: Math.max(0, m.customerCount + customerGain),
+      technicalDebt: clampDebt(m.technicalDebt + f.debtAdded),
+      productQuality: clampQuality(m.productQuality + f.qualityGain),
+      innovation: m.innovation + 1,
+    },
+    { featureName: randomFeatureName() },
+  );
+}
+
+export function refactorProduct(state: GameState): GameState {
+  if (!canTakeProductActionThisWeek(state) || !canAffordRefactor(state)) return state;
+  const m = state.metrics;
+  return apply(state, "refactor", {
+    cash: m.cash - REFACTOR.cost,
+    technicalDebt: clampDebt(m.technicalDebt - REFACTOR.debtRemoved),
+    productQuality: clampQuality(m.productQuality + REFACTOR.qualityGain),
+  });
+}
+
+export function fixBugs(state: GameState): GameState {
+  if (!canTakeProductActionThisWeek(state) || !canAffordFix(state)) return state;
+  const m = state.metrics;
+  return apply(state, "fix_bugs", {
+    cash: m.cash - FIX_BUGS.cost,
+    technicalDebt: clampDebt(m.technicalDebt - FIX_BUGS.debtRemoved),
+    productQuality: clampQuality(m.productQuality + FIX_BUGS.qualityGain),
+  });
 }

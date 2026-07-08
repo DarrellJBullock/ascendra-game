@@ -4,9 +4,30 @@
 // exist server-side during Next.js server rendering); every function here is
 // a no-op / returns null when `window` is unavailable.
 
+import { PRODUCT_QUALITY_START } from "./constants";
 import type { GameState } from "./types";
 
 export const SAVE_KEY = "ascendra:save:v1";
+
+/**
+ * Backfills fields added after a save was written, so a pre-feature save still
+ * loads into a valid current-shape GameState. Additive only — never drops data.
+ * Phase 2 added productQuality/innovation (metrics) and the employees list.
+ */
+function normalizeLoadedState(state: GameState): GameState {
+  return {
+    ...state,
+    metrics: {
+      ...state.metrics,
+      productQuality: state.metrics.productQuality ?? PRODUCT_QUALITY_START,
+      innovation: state.metrics.innovation ?? 0,
+    },
+    productActions: state.productActions ?? [],
+    teamActions: state.teamActions ?? [],
+    employees: state.employees ?? [],
+    fundraisingOffers: state.fundraisingOffers ?? [],
+  };
+}
 
 function isBrowser(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -34,7 +55,7 @@ export function loadGameState(): GameState | null {
   const raw = window.localStorage.getItem(SAVE_KEY);
   if (raw === null) return null;
   try {
-    return JSON.parse(raw) as GameState;
+    return normalizeLoadedState(JSON.parse(raw) as GameState);
   } catch {
     return null;
   }

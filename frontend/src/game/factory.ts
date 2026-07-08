@@ -2,6 +2,7 @@
 // logic here — this is pure initial-state construction, consumed by the
 // Zustand store's `newGame` action (DM-2).
 
+import { PRODUCT_QUALITY_START } from "./constants";
 import { FOUNDER_MODIFIERS } from "./founderModifiers";
 import type { FounderType, GameState, Industry } from "./types";
 
@@ -42,12 +43,15 @@ export function createNewGameState(input: NewGameInput): GameState {
       technicalDebt: STARTING_TECHNICAL_DEBT,
       valuation: STARTING_VALUATION,
       founderOwnershipPct: STARTING_FOUNDER_OWNERSHIP_PCT,
+      productQuality: PRODUCT_QUALITY_START,
+      innovation: 0,
     },
     turnHistory: [],
     eventLog: [],
     fundraisingOffers: [],
     productActions: [],
     teamActions: [],
+    employees: [],
     gameStatus: "in_progress",
     pendingEngineeringEvent: null,
     sessionSeed: Math.floor(Math.random() * 0xffffffff),

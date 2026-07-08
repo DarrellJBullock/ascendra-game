@@ -56,6 +56,12 @@ export interface GameMetrics {
   technicalDebt: number; // 0-100 scale (or similar), drives event probability/severity
   valuation: number; // recomputed every week per formula in Section 4
   founderOwnershipPct: number; // starts at 100, decreases on accepted fundraising offers
+  // Phase 2 — Product Management. Product quality (0-100) drives customer
+  // growth (neutral at 50, so the tuned baseline is preserved). Innovation is a
+  // cumulative count of features shipped. Set by the factory; pre-feature saves
+  // are backfilled to defaults on load (storage.ts normalizeLoadedState).
+  productQuality: number;
+  innovation: number;
 }
 
 /**
@@ -122,12 +128,14 @@ export interface ProductActionRecord {
   cashDelta: number;
   technicalDebtDelta: number;
   customerCountDelta: number;
+  qualityDelta?: number; // Phase 2: productQuality change this action applied
+  featureName?: string; // Phase 2: the named feature shipped, if action was ship_feature
 }
 
-/** Phase 2 — Team Management. Hire an engineer (slows weekly debt drift, adds
- * ongoing salary) or let one go (removes salary, costs severance). Union so
- * richer roles can be added later without a shape change. */
-export type TeamActionType = "hire" | "fire";
+/** Phase 2 — Team Management. Hire an engineer, promote one (more skill + more
+ * salary), or let one go. Union so richer actions can be added without a shape
+ * change. */
+export type TeamActionType = "hire" | "promote" | "fire";
 
 /** One team action taken in a given week (at most one per week). */
 export interface TeamActionRecord {
@@ -136,6 +144,21 @@ export interface TeamActionRecord {
   action: TeamActionType;
   cashDelta: number;
   teamSizeDelta: number;
+}
+
+/** Phase 2 — Team Management. Employee seniority; drives skill + salary. */
+export type EmployeeLevel = "Junior" | "Mid" | "Senior";
+
+/** An individual hire (the solo founder is implicit, not in this list). Their
+ * `skill` contributes to weekly debt-damping and their `salaryPerWeek` to
+ * payroll; promotion raises both. */
+export interface Employee {
+  id: string;
+  name: string;
+  level: EmployeeLevel;
+  skill: number;
+  salaryPerWeek: number;
+  hiredWeek: number;
 }
 
 /**
@@ -176,6 +199,11 @@ export interface GameState {
    * default to `[]`.
    */
   teamActions?: TeamActionRecord[];
+  /**
+   * Phase 2 — Team Management. Individual hires (founder is implicit). Optional
+   * so pre-feature saves deserialize; read sites default to `[]`.
+   */
+  employees?: Employee[];
   gameStatus: "in_progress" | "bankrupt" | "success";
   /**
    * Non-null between "an Engineering event rolled this week" and "the player

@@ -150,6 +150,14 @@ export function MetricsPanel({ metrics, previous }: MetricsPanelProps) {
           />
         }
       />
+      <Tile
+        label="Product quality"
+        value={`${Math.round(metrics.productQuality)}`}
+        delta={
+          <Delta current={metrics.productQuality} prev={p?.productQuality} goodWhenUp fmt="number" />
+        }
+      />
+      <Tile label="Innovation" value={formatNumber(metrics.innovation)} />
       <Tile label="Team size" value={formatNumber(metrics.teamSize)} />
       <Tile
         label="Founder ownership"

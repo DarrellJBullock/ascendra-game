@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { createNewGameState } from "@/src/game/factory";
 import {
-  applyProductAction,
-  canAffordProductAction,
+  FEATURES,
+  REFACTOR,
   canTakeProductActionThisWeek,
-  getProductAction,
+  fixBugs,
+  refactorProduct,
+  shipFeature,
 } from "@/src/game/product";
 import type { GameState } from "@/src/game/types";
 
@@ -14,67 +16,47 @@ function baseState(overrides: Partial<GameState["metrics"]> = {}): GameState {
   return { ...s, metrics: { ...s.metrics, ...overrides } };
 }
 
-describe("product actions", () => {
-  it("ship_feature: grows customers, adds debt, spends cash, records the week", () => {
-    const s = baseState({ cash: 100_000, customerCount: 100, technicalDebt: 20 });
-    const next = applyProductAction(s, "ship_feature");
-    // 5 flat + round(100 * 0.08) = 13 customers
-    expect(next.metrics.customerCount).toBe(113);
-    expect(next.metrics.technicalDebt).toBe(25); // +5
-    expect(next.metrics.cash).toBe(100_000 - getProductAction("ship_feature").cost);
+describe("product actions (Phase 2)", () => {
+  it("shipFeature: grows customers, raises quality + innovation, adds debt, spends cash", () => {
+    const s = baseState({ cash: 100_000, customerCount: 100, technicalDebt: 20, productQuality: 50, innovation: 0 });
+    const next = shipFeature(s, "small");
+    const f = FEATURES.small;
+    expect(next.metrics.customerCount).toBe(100 + f.flatCustomers + Math.round(100 * f.pctCustomers));
+    expect(next.metrics.technicalDebt).toBe(20 + f.debtAdded);
+    expect(next.metrics.productQuality).toBe(50 + f.qualityGain);
+    expect(next.metrics.innovation).toBe(1);
+    expect(next.metrics.cash).toBe(100_000 - f.cost);
     expect(next.productActions).toHaveLength(1);
-    expect(next.productActions![0].week).toBe(s.metrics.week);
-    expect(next.productActions![0].action).toBe("ship_feature");
+    expect(next.productActions![0].featureName).toBeTruthy();
   });
 
-  it("refactor: reduces technical debt and spends cash", () => {
-    const s = baseState({ cash: 100_000, technicalDebt: 40 });
-    const next = applyProductAction(s, "refactor");
-    expect(next.metrics.technicalDebt).toBe(22); // 40 - 18
-    expect(next.metrics.cash).toBe(100_000 - getProductAction("refactor").cost);
-    expect(next.metrics.customerCount).toBe(s.metrics.customerCount);
+  it("refactor: reduces debt and raises quality", () => {
+    const s = baseState({ cash: 100_000, technicalDebt: 40, productQuality: 50 });
+    const next = refactorProduct(s);
+    expect(next.metrics.technicalDebt).toBe(40 - REFACTOR.debtRemoved);
+    expect(next.metrics.productQuality).toBe(50 + REFACTOR.qualityGain);
   });
 
-  it("fix_bugs: small debt reduction, cheap", () => {
-    const s = baseState({ cash: 100_000, technicalDebt: 40 });
-    const next = applyProductAction(s, "fix_bugs");
-    expect(next.metrics.technicalDebt).toBe(33); // 40 - 7
-    expect(next.metrics.cash).toBe(100_000 - getProductAction("fix_bugs").cost);
-  });
-
-  it("clamps technical debt at 0 and records the effective delta", () => {
-    const s = baseState({ cash: 100_000, technicalDebt: 5 });
-    const next = applyProductAction(s, "refactor"); // -18 would go negative
-    expect(next.metrics.technicalDebt).toBe(0);
-    expect(next.productActions![0].technicalDebtDelta).toBe(-5); // effective, not -18
-  });
-
-  it("clamps technical debt at 100 on ship_feature", () => {
-    const s = baseState({ cash: 100_000, technicalDebt: 98 });
-    const next = applyProductAction(s, "ship_feature");
-    expect(next.metrics.technicalDebt).toBe(100);
-    expect(next.productActions![0].technicalDebtDelta).toBe(2);
+  it("clamps quality at 100 and debt at 0", () => {
+    const s = baseState({ cash: 100_000, technicalDebt: 3, productQuality: 98 });
+    const next = shipFeature(s, "major"); // +10 quality would exceed 100
+    expect(next.metrics.productQuality).toBe(100);
+    const r = refactorProduct(baseState({ cash: 100_000, technicalDebt: 5 })); // -18 would go negative
+    expect(r.metrics.technicalDebt).toBe(0);
   });
 
   it("enforces one product action per week", () => {
     const s = baseState({ cash: 100_000 });
     expect(canTakeProductActionThisWeek(s)).toBe(true);
-    const next = applyProductAction(s, "fix_bugs");
+    const next = fixBugs(s);
     expect(canTakeProductActionThisWeek(next)).toBe(false);
-    // A second attempt the same week is a no-op (same reference back).
-    expect(applyProductAction(next, "refactor")).toBe(next);
+    expect(shipFeature(next, "small")).toBe(next); // no-op second action
   });
 
-  it("is a no-op when the action can't be afforded", () => {
-    const s = baseState({ cash: 1_000 }); // below every action's cost
-    expect(canAffordProductAction(s, "refactor")).toBe(false);
-    expect(applyProductAction(s, "refactor")).toBe(s);
-    expect(s.productActions ?? []).toHaveLength(0);
-  });
-
-  it("is blocked once the game has ended", () => {
-    const s: GameState = { ...baseState({ cash: 100_000 }), gameStatus: "success" };
-    expect(canTakeProductActionThisWeek(s)).toBe(false);
-    expect(applyProductAction(s, "fix_bugs")).toBe(s);
+  it("is a no-op when unaffordable or the game has ended", () => {
+    const poor = baseState({ cash: 1_000 });
+    expect(refactorProduct(poor)).toBe(poor);
+    const ended: GameState = { ...baseState({ cash: 100_000 }), gameStatus: "success" };
+    expect(shipFeature(ended, "small")).toBe(ended);
   });
 });

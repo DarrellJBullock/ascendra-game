@@ -72,13 +72,29 @@ export const BASE_CUSTOMER_CHURN_RATE = 0.03; // TUNED (TE-9) — was 0.02 place
  * while a "pay down debt" playstyle can hold debt in the teens/20s. */
 export const TECHNICAL_DEBT_DRIFT_RATE = 1.5; // kept — verified via tuningSim.ts
 
-/** Phase 2 (Team Management): each engineer BEYOND the solo founder reduces the
- * weekly technical-debt drift by this much (team can halt drift, never reverse
- * it — active paydown is Product Management's job). At the starting teamSize of
- * 1 this is a no-op, so the tuned baseline economy is preserved for a player
- * who never hires; hiring trades salary burn for debt control. PLACEHOLDER —
- * not yet through a formal balance pass. */
-export const TEAM_DEBT_REDUCTION_PER_ENGINEER = 0.5;
+/** Phase 2 (Team Management): each point of employee SKILL reduces the weekly
+ * technical-debt drift by this much (team can halt drift, never reverse it —
+ * active paydown is Product Management's job). With no employees (skill 0) this
+ * is a no-op, so the tuned baseline economy is preserved for a player who never
+ * hires; hiring trades salary burn for debt control + faster features.
+ * PLACEHOLDER — not yet through a formal balance pass. */
+export const TEAM_DEBT_REDUCTION_PER_SKILL = 0.5;
+
+/** Phase 2 (Team Management): the founder's own weekly draw. Set equal to the
+ * legacy per-head salary so a solo founder's burn is byte-identical to the
+ * tuned baseline (financialEngine now sums the founder + each employee salary
+ * instead of teamSize * flat salary). */
+export const FOUNDER_WEEKLY_SALARY = SALARY_PER_TEAM_MEMBER_WEEKLY;
+
+/** Phase 2 (Product Management): customer growth is multiplied by
+ * 1 + QUALITY_GROWTH_SENSITIVITY * (productQuality - 50) / 50. Neutral (×1) at
+ * the starting quality of 50, so the tuned baseline holds; building quality
+ * above 50 accelerates growth, letting it fall below 50 penalizes.
+ * PLACEHOLDER tuning lever. */
+export const QUALITY_GROWTH_SENSITIVITY = 0.5;
+
+/** Phase 2 (Product Management): starting product quality (0-100, neutral). */
+export const PRODUCT_QUALITY_START = 50;
 
 /** Minimum MRR required before a Seed round offer becomes available.
  * TE-9: kept at $5,000 — with BASE_PRICE_PER_CUSTOMER=60 this is reachable
