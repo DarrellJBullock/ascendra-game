@@ -62,6 +62,7 @@ import {
   driftMix,
   focusAcqMult,
 } from "./segments";
+import { brandAcquisitionFactor, decayBrand } from "./marketing";
 import type { EventTrigger, GameState, TurnHistoryRecord } from "./types";
 
 /**
@@ -115,10 +116,16 @@ export function advanceWeek(state: GameState, rngSeed?: number): GameState {
   //    (debt drift, step 3, happens after growth so this week's drift
   //    doesn't retroactively affect this week's growth calc) and the current
   //    productQuality (neutral at 50). Segment focus/mix scale acquisition/churn.
+  // Phase 3 — Marketing: brand awareness boosts acquisition (×1 at brand 0),
+  // then decays a step toward 0 for next week.
+  const brand = state.metrics.brandAwareness ?? 0;
   const growth = applyCustomerGrowthChurn(
     state.metrics,
     state.company.founderModifiers,
-    { acquisitionMult: focusAcqMult(focus), churnMult: blendedChurnMult(mix) },
+    {
+      acquisitionMult: focusAcqMult(focus) * brandAcquisitionFactor(brand),
+      churnMult: blendedChurnMult(mix),
+    },
   );
 
   // 3. Technical debt drift (TE-3) — dampened by total team skill.
@@ -138,6 +145,8 @@ export function advanceWeek(state: GameState, rngSeed?: number): GameState {
     // Segment mix drifts toward the focus for next week; expansion accrues.
     segmentMix: driftMix(mix, focus),
     segmentExpansion: nextExpansion,
+    // Brand awareness decays a step (no-op at 0).
+    brandAwareness: decayBrand(brand),
   };
 
   // 4. Valuation (TE-4) + runway (TE-5)

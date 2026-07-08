@@ -24,11 +24,13 @@ function normalizeLoadedState(state: GameState): GameState {
       innovation: state.metrics.innovation ?? 0,
       segmentMix: state.metrics.segmentMix ?? { ...DEFAULT_SEGMENT_MIX },
       segmentExpansion: state.metrics.segmentExpansion ?? 0,
+      brandAwareness: state.metrics.brandAwareness ?? 0,
     },
     productActions: state.productActions ?? [],
     teamActions: state.teamActions ?? [],
     employees: state.employees ?? [],
     segmentFocus: state.segmentFocus ?? "smb",
+    marketingActions: state.marketingActions ?? [],
     fundraisingOffers: state.fundraisingOffers ?? [],
   };
 }

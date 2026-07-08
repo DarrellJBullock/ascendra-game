@@ -40,8 +40,10 @@ export function buildRunSummary(state: GameState): string {
     `Quality ${Math.round(m.productQuality)} · Innovation ${m.innovation} · ` +
       `Team ${m.teamSize} (${employees.length} hires) · Founder ownership ${m.founderOwnershipPct.toFixed(1)}%`,
     `Segment focus: ${SEGMENTS[state.segmentFocus ?? "smb"].label} · ` +
-      `Rev/customer ${money(blendedPrice(m.segmentMix ?? DEFAULT_SEGMENT_MIX))}`,
+      `Rev/customer ${money(blendedPrice(m.segmentMix ?? DEFAULT_SEGMENT_MIX))} · ` +
+      `Brand ${Math.round(m.brandAwareness ?? 0)}`,
     `Product actions: ${productActions.length} · Team changes: ${teamActions.length} · ` +
+      `Marketing campaigns: ${(state.marketingActions ?? []).length} · ` +
       `Fundraises accepted: ${acceptedRaises}/${raises.length}`,
     `Events faced: ${state.eventLog.length}`,
   ].join("\n");

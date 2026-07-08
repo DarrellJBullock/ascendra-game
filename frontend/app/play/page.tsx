@@ -22,6 +22,7 @@ import ProductPanel from "@/components/product/ProductPanel";
 import TeamPanel from "@/components/team/TeamPanel";
 import ExitsBanner from "@/components/exits/ExitsBanner";
 import SegmentsPanel from "@/components/segments/SegmentsPanel";
+import MarketingPanel from "@/components/marketing/MarketingPanel";
 import CopyRunButton from "@/components/playtest/CopyRunButton";
 import { Wordmark } from "@/components/brand/Wordmark";
 
@@ -165,9 +166,10 @@ export default function PlayPage() {
 
         <SegmentsPanel />
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
           <ProductPanel />
           <TeamPanel />
+          <MarketingPanel />
           <FundraisingPanel />
         </div>
 

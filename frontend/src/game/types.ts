@@ -78,12 +78,36 @@ export interface GameMetrics {
   // for save-compat; defaulted by the factory + storage normalizer + engine.
   segmentMix?: Record<CustomerSegment, number>;
   segmentExpansion?: number;
+  // Phase 3 — Marketing. Brand awareness (0-100) boosts customer acquisition and
+  // decays without investment. NEUTRAL at 0 (no boost), so a player who never
+  // markets plays the byte-identical tuned economy. Optional for save-compat.
+  brandAwareness?: number;
 }
 
 /** Phase 3 — Customer Segments. SMB is the neutral default (priced at the tuned
  * BASE_PRICE); higher tiers trade slower acquisition for higher price, lower
  * churn, expansion revenue, and support cost. */
 export type CustomerSegment = "smb" | "midmarket" | "enterprise" | "government";
+
+/** Phase 3 — Marketing campaign types. Paid ads buy customers now; content/SEO
+ * build lasting brand; social is cheap and balanced; partnerships are a big
+ * brand jump. */
+export type MarketingCampaignType =
+  | "paid_ads"
+  | "content"
+  | "seo"
+  | "social"
+  | "partnerships";
+
+/** One marketing campaign run in a given week (at most one per week). */
+export interface MarketingActionRecord {
+  id: string;
+  week: number;
+  type: MarketingCampaignType;
+  cashDelta: number;
+  customersDelta: number;
+  brandDelta: number;
+}
 
 /**
  * One record appended per completed week; feeds the dashboard's 12-week trend
@@ -241,6 +265,9 @@ export interface GameState {
   /** Phase 3 — Customer Segments. The player's current acquisition focus; new
    * customers pull the segment mix toward it. Defaults to "smb" (neutral). */
   segmentFocus?: CustomerSegment;
+  /** Phase 3 — Marketing. Log of campaigns run (at most one per week); drives the
+   * once-per-week gate and lifetime CAC. Optional for save-compat. */
+  marketingActions?: MarketingActionRecord[];
   // Phase 2 added two player-chosen exit wins: "acquired" (take an acquisition
   // offer) and "lifestyle" (settle as a sustainable, profitable business),
   // alongside the automatic "success" ($1M valuation) and "bankrupt" end states.
