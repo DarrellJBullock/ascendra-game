@@ -3,10 +3,21 @@ import logging
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from app.ai_client import UpstreamError, UpstreamTimeoutError, call_anthropic
+from app.ai_client import (
+    UpstreamError,
+    UpstreamTimeoutError,
+    call_advisor,
+    call_anthropic,
+)
 from app.config import get_settings
-from app.models import EventGenerateRequest, EventGenerateResponse, HealthResponse
-from app.stub import build_stub_response
+from app.models import (
+    AdvisorRequest,
+    AdvisorResponse,
+    EventGenerateRequest,
+    EventGenerateResponse,
+    HealthResponse,
+)
+from app.stub import build_advisor_stub, build_stub_response
 from app.validation import ResponseValidationError, validate_ai_payload
 
 logger = logging.getLogger("ascendra.events")
@@ -51,3 +62,21 @@ def generate_event(request: EventGenerateRequest) -> EventGenerateResponse | JSO
     except ResponseValidationError as exc:
         logger.warning("AI response failed validation: %s", exc)
         return JSONResponse(status_code=502, content={"error": "invalid_response"})
+
+
+@router.post("/v1/advisor", response_model=AdvisorResponse)
+def advisor(request: AdvisorRequest) -> AdvisorResponse | JSONResponse:
+    """AI founder advisor (Phase 3): a free-text, context-grounded reply. Falls
+    back to the stub when no key is configured; every non-2xx routes the frontend
+    to its local heuristic tip."""
+    settings = get_settings()
+    if settings.effective_use_stub:
+        return AdvisorResponse(reply=build_advisor_stub(request.context))
+    try:
+        return AdvisorResponse(reply=call_advisor(request, settings))
+    except UpstreamTimeoutError:
+        logger.warning("Advisor call timed out")
+        return JSONResponse(status_code=504, content={"error": "timeout"})
+    except UpstreamError as exc:
+        logger.warning("Advisor call failed: %s", exc)
+        return JSONResponse(status_code=502, content={"error": "upstream_error"})

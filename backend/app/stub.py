@@ -18,6 +18,7 @@ length). Any violation must be treated as a failure and surfaced via a
 structured error response — never pass through malformed content.
 """
 from app.models import (
+    AdvisorContext,
     EventChoice,
     EventConsequences,
     EventGenerateResponse,
@@ -76,4 +77,39 @@ def build_stub_response(context: EventRequestContext) -> EventGenerateResponse:
     return EventGenerateResponse(
         narrative=narrative,
         choices=[quick_patch, proper_fix, war_room],
+    )
+
+
+def build_advisor_stub(context: AdvisorContext) -> str:
+    """Deterministic advisor reply for the no-key path — a priority-ordered
+    heuristic tip mirroring the frontend fallback."""
+    if context.runwayWeeks < 4:
+        return (
+            f"Runway is under a month, {context.companyName}. Your priority this week is "
+            "cash: line up a raise or cut burn — everything else waits until you're not "
+            "about to hit zero."
+        )
+    if context.technicalDebt > 60:
+        return (
+            f"Technical debt is at {context.technicalDebt:.0f}/100 — that's crisis territory "
+            "and it's driving your event risk. Ship a refactor before an outage forces the issue."
+        )
+    if context.productQuality < 40:
+        return (
+            f"Product quality ({context.productQuality:.0f}/100) is dragging your growth. "
+            "Invest in features and fixes; acquisition compounds much faster on a good product."
+        )
+    if context.customerCount < 30 and context.week > 5:
+        return (
+            "Growth is slow for this stage. Try a marketing campaign to build brand, or "
+            "reconsider your acquisition focus — SMB is faster to win early on."
+        )
+    if context.founderOwnershipPct < 50:
+        return (
+            f"You're down to {context.founderOwnershipPct:.0f}% ownership. Be selective on "
+            "future rounds — only raise when the cash unlocks real, near-term growth."
+        )
+    return (
+        f"You're in reasonable shape at week {context.week}. Pick the single weakest metric "
+        "and push it this week — momentum comes from fixing the bottleneck, not spreading thin."
     )

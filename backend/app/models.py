@@ -65,6 +65,40 @@ class EventGenerateResponse(BaseModel):
     choices: list[EventChoice] = Field(..., min_length=2, max_length=3)
 
 
+class AdvisorContext(BaseModel):
+    companyName: str = Field(..., min_length=1, max_length=40)
+    industry: Industry
+    founderType: FounderType
+    week: int = Field(..., ge=1)
+    cash: float
+    mrr: float
+    runwayWeeks: float
+    customerCount: int = Field(..., ge=0)
+    valuation: float
+    technicalDebt: float
+    productQuality: float
+    teamSize: int = Field(..., ge=1)
+    brandAwareness: float
+    founderOwnershipPct: float
+    segmentFocus: str = Field(..., max_length=40)
+
+
+class AdvisorMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(..., min_length=1, max_length=2000)
+
+
+class AdvisorRequest(BaseModel):
+    context: AdvisorContext
+    question: str = Field(..., min_length=1, max_length=2000)
+    # Optional recent turns for continuity; capped to keep prompts bounded.
+    history: list[AdvisorMessage] = Field(default_factory=list, max_length=12)
+
+
+class AdvisorResponse(BaseModel):
+    reply: str = Field(..., min_length=1)
+
+
 class HealthResponse(BaseModel):
     status: Literal["ok"] = "ok"
 
