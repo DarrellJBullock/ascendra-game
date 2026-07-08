@@ -28,7 +28,7 @@ FounderType = Literal[
     "FinanceExecutive",
 ]
 SeverityHint = Literal["low", "moderate", "high"]
-EventTrigger = Literal["engineering", "investor", "people"]
+EventTrigger = Literal["engineering", "investor", "people", "customer", "market"]
 
 
 class EventRequestContext(BaseModel):

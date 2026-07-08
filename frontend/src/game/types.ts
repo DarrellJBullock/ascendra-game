@@ -86,7 +86,12 @@ export interface TurnHistoryRecord {
 /** Event categories. Phase 2 added Investor + People alongside Engineering.
  * Which category a given week's event is depends on state (see eventCategory.ts);
  * the fire probability itself stays purely debt-driven (engineeringEvent.ts). */
-export type EventTrigger = "engineering" | "investor" | "people";
+export type EventTrigger =
+  | "engineering"
+  | "investor"
+  | "people"
+  | "customer"
+  | "market";
 
 export type SeverityBand = "low" | "moderate" | "high";
 

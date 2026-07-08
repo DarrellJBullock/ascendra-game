@@ -53,6 +53,18 @@ _THEMES: dict[str, str] = {
         "culture situation — a key employee considering leaving, burnout, interpersonal "
         "conflict, or morale — consistent with the company's stage."
     ),
+    "customer": (
+        'You generate a short "Customer" event. Content must be about the company\'s '
+        "customer base — churn risk, a support crunch, a big account escalating, strong "
+        "feature demand, or a trial-activation problem — consistent with its metrics."
+    ),
+    "market": (
+        'You generate a short "Market" event. Content must be about EXTERNAL market '
+        "conditions — specifically a competitor's move, a funding-market or economic "
+        "downturn, or a regulatory/policy change in the company's industry. Do NOT write "
+        "about an internal engineering bug, outage, or the team; the trigger is the "
+        "outside world acting on the company."
+    ),
 }
 
 _OUTPUT_RULES = """\

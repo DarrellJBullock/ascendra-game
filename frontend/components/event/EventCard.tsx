@@ -22,6 +22,8 @@ const CATEGORY: Record<EventTrigger, { icon: string; label: string; color: strin
   engineering: { icon: "⚙", label: "Engineering incident", color: "var(--warn)", soft: "var(--warn-soft)" },
   investor: { icon: "💼", label: "Investor relations", color: "var(--accent)", soft: "var(--accent-soft)" },
   people: { icon: "👥", label: "People & team", color: "var(--good)", soft: "var(--good-soft)" },
+  customer: { icon: "🙋", label: "Customer signal", color: "var(--accent-2)", soft: "var(--accent-soft)" },
+  market: { icon: "🌐", label: "Market shift", color: "var(--crit)", soft: "var(--crit-soft)" },
 };
 
 function ConsequenceChip({

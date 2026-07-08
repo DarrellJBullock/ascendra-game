@@ -10,10 +10,16 @@
 //     — people problems need people.
 //   - Investor: eligible only once you've accepted a fundraise (you have
 //     investors), with extra weight when runway is short (board pressure).
+//   - Customer (Phase 3): eligible once you have customers; weight scales with
+//     the customer base (churn/support/big-account risk grows with it).
+//   - Market (Phase 3): external pressure (competitors, downturns, regulation);
+//     eligible once you're a going concern (any customers or revenue).
 //
-// Baseline safety: a solo founder who has never raised has zero People and zero
-// Investor weight, so every event is Engineering — identical to before, which
-// is what keeps the balance sim's passive-strategy distributions unchanged.
+// Baseline note: a brand-new solo founder (no employees, no raise, no customers,
+// no revenue) still gets 100% Engineering. Unlike Investor/People, the Customer/
+// Market weights DO engage for ordinary play once a customer base exists, so the
+// balance sim's passive distributions shift slightly — the weights below are
+// tuned (scripts/tuningSim.ts) to keep every spec target satisfied.
 
 import { LOW_RUNWAY_WARNING_WEEKS } from "./constants";
 import { createSeededRng } from "./rng";
@@ -27,11 +33,15 @@ function categoryWeights(state: GameState): Record<EventTrigger, number> {
   const hasInvestors = (state.fundraisingOffers ?? []).some((o) => o.status === "accepted");
   const runway = state.metrics.runwayWeeks;
   const lowRunway = Number.isFinite(runway) && runway < LOW_RUNWAY_WARNING_WEEKS * 2;
+  const customers = Math.max(0, state.metrics.customerCount);
+  const goingConcern = customers > 0 || state.metrics.mrr > 0;
 
   return {
-    engineering: 4 + debt / 25, // 4..8
+    engineering: 5 + debt / 25, // 5..9 — kept dominant so new categories are spice
     people: employees, // 0 when solo; grows with the team
     investor: hasInvestors ? 1 + (lowRunway ? 2 : 0) : 0,
+    customer: customers > 0 ? Math.min(1.8, customers / 110) : 0, // grows with the base
+    market: goingConcern ? 0.8 : 0, // external pressure once you're a real business
   };
 }
 
@@ -41,7 +51,7 @@ function categoryWeights(state: GameState): Record<EventTrigger, number> {
  */
 export function chooseEventCategory(state: GameState, rngSeed?: number): EventTrigger {
   const weights = categoryWeights(state);
-  const order: EventTrigger[] = ["engineering", "people", "investor"];
+  const order: EventTrigger[] = ["engineering", "people", "investor", "customer", "market"];
   const total = order.reduce((sum, k) => sum + weights[k], 0);
   if (total <= 0) return "engineering";
 

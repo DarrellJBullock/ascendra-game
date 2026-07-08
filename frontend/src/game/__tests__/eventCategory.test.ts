@@ -42,6 +42,23 @@ describe("event category selection (Phase 2, sim-safe gating)", () => {
     expect(seen.has("people")).toBe(false);
   });
 
+  it("with customers: customer + market events become possible", () => {
+    const s: GameState = { ...base(), metrics: { ...base().metrics, customerCount: 200, mrr: 8000 } };
+    const seen = sample(s);
+    expect(seen.has("customer")).toBe(true);
+    expect(seen.has("market")).toBe(true);
+    expect(seen.has("engineering")).toBe(true);
+    // still no people/investor without employees or a raise
+    expect(seen.has("people")).toBe(false);
+    expect(seen.has("investor")).toBe(false);
+  });
+
+  it("no customers and no revenue: neither customer nor market fires", () => {
+    const seen = sample(base()); // fresh: 0 customers, 0 mrr
+    expect(seen.has("customer")).toBe(false);
+    expect(seen.has("market")).toBe(false);
+  });
+
   it("is deterministic given a fixed seed", () => {
     const s: GameState = { ...base(), employees: [emp("a")], fundraisingOffers: [acceptedRaise] };
     expect(chooseEventCategory(s, 42)).toBe(chooseEventCategory(s, 42));

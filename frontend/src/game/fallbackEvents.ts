@@ -571,6 +571,221 @@ const PEOPLE_TEMPLATES: SeverityBank = {
   ],
 };
 
+// Customer events (Phase 3) — churn, support load, big-account risk, demand.
+// Industry-agnostic. Each has a cheap-but-lossy option and a costly-but-better
+// one, mirroring the engineering shape so the balance sim stays well-behaved.
+const CUSTOMER_TEMPLATES: SeverityBank = {
+  low: [
+    {
+      narrative:
+        "A power user posts a detailed feature request that's quietly racking up upvotes from other customers.",
+      choices: [
+        {
+          label: "Build a quick version of it",
+          description: "Costs a little now, but delights the base and pulls in a few referrals.",
+          consequences: { cashDelta: -1500, technicalDebtDelta: 2, customerCountDelta: 5 },
+        },
+        {
+          label: "Thank them and add it to the backlog",
+          description: "Free, but a few on-the-fence users quietly drift off.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 2, customerCountDelta: -4 },
+        },
+      ],
+    },
+    {
+      narrative:
+        "Support tickets are trickling in faster than the team can answer them, and response times are slipping.",
+      choices: [
+        {
+          label: "Spend a little on a support tool + templates",
+          description: "Small cost, but you get ahead of the queue and keep customers happy.",
+          consequences: { cashDelta: -1200, technicalDebtDelta: 0, customerCountDelta: 1 },
+        },
+        {
+          label: "Let the team power through it",
+          description: "No spend, but slow replies sour a handful of customers.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 4, customerCountDelta: -6 },
+        },
+      ],
+    },
+  ],
+  moderate: [
+    {
+      narrative:
+        "Your biggest customer is threatening to churn unless you ship an integration they've been asking for.",
+      choices: [
+        {
+          label: "Build the custom integration for them",
+          description: "Expensive and a bit of a distraction, but you keep a marquee account and its referrals.",
+          consequences: { cashDelta: -8000, technicalDebtDelta: 4, customerCountDelta: 4 },
+        },
+        {
+          label: "Hold your roadmap and risk it",
+          description: "Saves the cash, but they leave — and take a few reference customers with them.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 2, customerCountDelta: -16 },
+        },
+      ],
+    },
+    {
+      narrative:
+        "A wave of new trial users is signing up but dropping off before they ever reach the 'aha' moment.",
+      choices: [
+        {
+          label: "Invest in a guided onboarding flow",
+          description: "Real work, but activation jumps and the funnel starts converting.",
+          consequences: { cashDelta: -7000, technicalDebtDelta: -3, customerCountDelta: 10 },
+        },
+        {
+          label: "Assume they'll figure it out",
+          description: "No spend, but the leaky funnel keeps costing you signups.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 5, customerCountDelta: -10 },
+        },
+      ],
+    },
+  ],
+  high: [
+    {
+      narrative:
+        "Your largest enterprise account — a big chunk of your MRR — has escalated to an executive churn conversation.",
+      choices: [
+        {
+          label: "Fly out, make concessions, save the account",
+          description: "Very expensive and distracting, but you retain a huge slice of revenue.",
+          consequences: { cashDelta: -18000, technicalDebtDelta: 2, customerCountDelta: -6 },
+        },
+        {
+          label: "Let them go and refocus on smaller accounts",
+          description: "Cheaper today, but losing them is a serious hit to the customer base.",
+          consequences: { cashDelta: -2000, technicalDebtDelta: 0, customerCountDelta: -30 },
+        },
+      ],
+    },
+    {
+      narrative:
+        "A competitor is aggressively poaching your customers with steep introductory pricing, and a cohort is already wavering.",
+      choices: [
+        {
+          label: "Launch a retention offer to match",
+          description: "Cuts into cash, but you hold most of the at-risk cohort.",
+          consequences: { cashDelta: -12000, technicalDebtDelta: 0, customerCountDelta: -8 },
+        },
+        {
+          label: "Hold pricing and compete on quality",
+          description: "Protects margin, but a meaningful chunk of customers takes the cheaper deal.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 3, customerCountDelta: -26 },
+        },
+      ],
+    },
+  ],
+};
+
+// Market events (Phase 3) — competitors, downturns, regulation. Industry-agnostic
+// external pressure.
+const MARKET_TEMPLATES: SeverityBank = {
+  low: [
+    {
+      narrative:
+        "A new competitor launched this week with a slick site and a bit of social buzz in your category.",
+      choices: [
+        {
+          label: "Fire back with a small marketing push",
+          description: "A little spend to stay top-of-mind and pick up some of the attention.",
+          consequences: { cashDelta: -2000, technicalDebtDelta: 0, customerCountDelta: 6 },
+        },
+        {
+          label: "Ignore them and keep building",
+          description: "Free, but they skim a few prospects who were comparing options.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 3, customerCountDelta: -5 },
+        },
+      ],
+    },
+    {
+      narrative:
+        "An industry analyst published a roundup of your category — you got a brief, lukewarm mention.",
+      choices: [
+        {
+          label: "Brief the analyst properly for next time",
+          description: "A modest effort that improves how you're positioned going forward.",
+          consequences: { cashDelta: -1000, technicalDebtDelta: 0, customerCountDelta: 3 },
+        },
+        {
+          label: "Let it slide",
+          description: "No cost; a few prospects weight the tepid mention and hesitate.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 0, customerCountDelta: -2 },
+        },
+      ],
+    },
+  ],
+  moderate: [
+    {
+      narrative:
+        "A funding-market downturn has investors across the board turning cautious and pushing portfolios to conserve cash.",
+      choices: [
+        {
+          label: "Pull back and wait it out",
+          description: "Conserves focus, but pulling back on growth cedes momentum and customers.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 3, customerCountDelta: -10 },
+        },
+        {
+          label: "Keep investing through the downturn",
+          description: "Keeps momentum, but you're spending into a colder market.",
+          consequences: { cashDelta: -3000, technicalDebtDelta: 0, customerCountDelta: 6 },
+        },
+      ],
+    },
+    {
+      narrative:
+        "A well-funded competitor just slashed prices across your category, and prospects are using it as leverage.",
+      choices: [
+        {
+          label: "Introduce a competitive pricing tier",
+          description: "Sacrifices some revenue per customer, but keeps deals from stalling.",
+          consequences: { cashDelta: -6000, technicalDebtDelta: 0, customerCountDelta: 8 },
+        },
+        {
+          label: "Hold pricing and lean on differentiation",
+          description: "Protects margin, but price-sensitive prospects walk.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 0, customerCountDelta: -10 },
+        },
+      ],
+    },
+  ],
+  high: [
+    {
+      narrative:
+        "A new regulation in your space just took effect, requiring costly compliance work to keep operating legally.",
+      choices: [
+        {
+          label: "Do the compliance work properly",
+          description: "Expensive and slow, but you're fully compliant and it's off the table.",
+          consequences: { cashDelta: -20000, technicalDebtDelta: -6, customerCountDelta: -4 },
+        },
+        {
+          label: "Do the bare minimum for now",
+          description: "Cheap today, but the shortcuts pile up as debt and risk customer trust.",
+          consequences: { cashDelta: -4000, technicalDebtDelta: 14, customerCountDelta: -10 },
+        },
+      ],
+    },
+    {
+      narrative:
+        "A category-wide economic downturn is shrinking budgets everywhere, and customers are cutting discretionary tools.",
+      choices: [
+        {
+          label: "Double down on retention and value messaging",
+          description: "Costs cash in a lean moment, but you hold most of the base through it.",
+          consequences: { cashDelta: -10000, technicalDebtDelta: 0, customerCountDelta: -12 },
+        },
+        {
+          label: "Ride it out and conserve cash",
+          description: "Preserves runway, but the downturn carves a real chunk out of your customers.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 3, customerCountDelta: -28 },
+        },
+      ],
+    },
+  ],
+};
+
 // Industry-agnostic engineering incidents, used for any industry without a
 // bespoke bank (the Phase-2 additions). Genuine content, not a degraded state.
 const GENERIC_ENGINEERING: SeverityBank = {
@@ -696,14 +911,23 @@ export function selectFallbackEvent(
   severityBand: SeverityBand,
   rand: () => number = Math.random,
 ): FallbackEventTemplate {
-  const variants =
-    trigger === "investor"
-      ? INVESTOR_TEMPLATES[severityBand]
-      : trigger === "people"
-        ? PEOPLE_TEMPLATES[severityBand]
-        : (FALLBACK_EVENT_TEMPLATES[industry] ?? GENERIC_ENGINEERING)[severityBand];
+  const byTrigger: Partial<Record<EventTrigger, SeverityBank>> = {
+    investor: INVESTOR_TEMPLATES,
+    people: PEOPLE_TEMPLATES,
+    customer: CUSTOMER_TEMPLATES,
+    market: MARKET_TEMPLATES,
+  };
+  const bank = byTrigger[trigger] ?? FALLBACK_EVENT_TEMPLATES[industry] ?? GENERIC_ENGINEERING;
+  const variants = bank[severityBand];
   const index = Math.floor(rand() * variants.length) % variants.length;
   return variants[index];
 }
 
-export { FALLBACK_EVENT_TEMPLATES, GENERIC_ENGINEERING, INVESTOR_TEMPLATES, PEOPLE_TEMPLATES };
+export {
+  CUSTOMER_TEMPLATES,
+  FALLBACK_EVENT_TEMPLATES,
+  GENERIC_ENGINEERING,
+  INVESTOR_TEMPLATES,
+  MARKET_TEMPLATES,
+  PEOPLE_TEMPLATES,
+};
