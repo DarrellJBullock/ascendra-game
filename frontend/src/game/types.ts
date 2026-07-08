@@ -75,8 +75,10 @@ export interface TurnHistoryRecord {
   fundraisingOfferId?: string; // reference into fundraisingOffers, if raised this week
 }
 
-/** Only category in v1; union grows in Phase 2/3 (see file header). */
-export type EventTrigger = "engineering";
+/** Event categories. Phase 2 added Investor + People alongside Engineering.
+ * Which category a given week's event is depends on state (see eventCategory.ts);
+ * the fire probability itself stays purely debt-driven (engineeringEvent.ts). */
+export type EventTrigger = "engineering" | "investor" | "people";
 
 export type SeverityBand = "low" | "moderate" | "high";
 

@@ -48,10 +48,11 @@ import { applyTechnicalDebtDrift } from "./technicalDebt";
 import { computeValuation, findLastAcceptedOffer } from "./valuation";
 import { computeRunwayWeeks } from "./runway";
 import { rollEngineeringEvent } from "./engineeringEvent";
+import { chooseEventCategory } from "./eventCategory";
 import { checkEndStates } from "./endStates";
 import { deriveWeekSeed } from "./rng";
 import { teamPayroll, teamTotalSkill } from "./team";
-import type { GameState, TurnHistoryRecord } from "./types";
+import type { EventTrigger, GameState, TurnHistoryRecord } from "./types";
 
 /**
  * Advances the game by exactly one week. Pure function: same `(state,
@@ -131,6 +132,19 @@ export function advanceWeek(state: GameState, rngSeed?: number): GameState {
     rngSeed === undefined ? undefined : deriveWeekSeed(rngSeed, nextWeekNumber);
   const roll = rollEngineeringEvent(nextMetrics.technicalDebt, weekSeed);
 
+  // If an event fired, decide its category (Engineering / Investor / People)
+  // from state. The fire probability above is unchanged (still debt-driven), so
+  // the tuned total event rate is preserved — only the category varies. A
+  // separate derived seed keeps category selection deterministic without
+  // perturbing the fire/severity rolls. `stateBeforeCategory` carries the
+  // post-advance metrics (runway, etc.) the chooser reads.
+  const trigger: EventTrigger = roll.fired
+    ? chooseEventCategory(
+        { ...state, metrics: nextMetrics },
+        weekSeed === undefined ? undefined : weekSeed ^ 0x9e3779b9,
+      )
+    : "engineering";
+
   const historyRecord: TurnHistoryRecord = {
     week: nextWeekNumber,
     metricsSnapshot: nextMetrics,
@@ -145,7 +159,7 @@ export function advanceWeek(state: GameState, rngSeed?: number): GameState {
     metrics: nextMetrics,
     turnHistory: [...state.turnHistory, historyRecord], // TE-8: full log kept
     pendingEngineeringEvent: roll.fired
-      ? { week: nextWeekNumber, trigger: "engineering", severity: roll.severity }
+      ? { week: nextWeekNumber, trigger, severity: roll.severity }
       : null,
   };
 

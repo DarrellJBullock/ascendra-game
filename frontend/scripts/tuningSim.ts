@@ -87,6 +87,7 @@ function runOnce(
     if (state.pendingEngineeringEvent) {
       eventCount += 1;
       const template = selectFallbackEvent(
+        state.pendingEngineeringEvent.trigger,
         state.company.industry,
         state.pendingEngineeringEvent.severity,
         rand,

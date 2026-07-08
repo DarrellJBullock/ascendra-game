@@ -38,7 +38,7 @@ def generate_event(request: EventGenerateRequest) -> EventGenerateResponse | JSO
         return build_stub_response(request.context)
 
     try:
-        raw = call_anthropic(request.context, settings)
+        raw = call_anthropic(request.trigger, request.context, settings)
     except UpstreamTimeoutError:
         logger.warning("Anthropic call timed out")
         return JSONResponse(status_code=504, content={"error": "timeout"})

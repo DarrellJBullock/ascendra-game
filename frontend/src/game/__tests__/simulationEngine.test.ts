@@ -32,6 +32,7 @@ describe("advanceWeek determinism (TE-7/TE-10)", () => {
         if (state.pendingEngineeringEvent) {
           // Resolve deterministically the same way each run: pick first choice.
           const template = selectFallbackEvent(
+            state.pendingEngineeringEvent.trigger,
             state.company.industry,
             state.pendingEngineeringEvent.severity,
             () => 0,
@@ -132,6 +133,7 @@ describe("rollEngineeringEvent (EV-1)", () => {
       if (state.pendingEngineeringEvent) {
         eventCount += 1;
         const template = selectFallbackEvent(
+          state.pendingEngineeringEvent.trigger,
           state.company.industry,
           state.pendingEngineeringEvent.severity,
           () => 0,
@@ -173,7 +175,7 @@ describe("applyEventChoice (EV-2)", () => {
     state.metrics.technicalDebt = 20;
     state.metrics.customerCount = 10;
 
-    const template = selectFallbackEvent("AI", "low", () => 0);
+    const template = selectFallbackEvent("engineering", "AI", "low", () => 0);
     const event = materializeFallbackEvent(template, 2, "engineering");
     const stateWithLoggedEvent = { ...state, eventLog: [...state.eventLog, event] };
 
@@ -202,7 +204,7 @@ describe("applyEventChoice (EV-2)", () => {
 
   it("throws for an unknown choiceId", () => {
     const state = freshState();
-    const template = selectFallbackEvent("AI", "low", () => 0);
+    const template = selectFallbackEvent("engineering", "AI", "low", () => 0);
     const event = materializeFallbackEvent(template, 2, "engineering");
     expect(() => applyEventChoice(state, event, "not-a-real-id")).toThrow();
   });

@@ -104,10 +104,11 @@ function isValidAiResponse(body: unknown): body is {
 }
 
 function fallbackResult(
+  trigger: EventTrigger,
   industry: Industry,
   severityHint: SeverityBand,
 ): GeneratedNarrativeEvent {
-  const template = selectFallbackEvent(industry, severityHint);
+  const template = selectFallbackEvent(trigger, industry, severityHint);
   return {
     narrative: template.narrative,
     choices: template.choices,
@@ -138,18 +139,18 @@ export async function generateEventNarrative(
     });
 
     if (!response.ok) {
-      return fallbackResult(context.industry, context.severityHint);
+      return fallbackResult(trigger, context.industry, context.severityHint);
     }
 
     let body: unknown;
     try {
       body = await response.json();
     } catch {
-      return fallbackResult(context.industry, context.severityHint);
+      return fallbackResult(trigger, context.industry, context.severityHint);
     }
 
     if (!isValidAiResponse(body)) {
-      return fallbackResult(context.industry, context.severityHint);
+      return fallbackResult(trigger, context.industry, context.severityHint);
     }
 
     return {
@@ -169,7 +170,7 @@ export async function generateEventNarrative(
     // Covers: network failure, DNS error, abort-due-to-timeout, or any other
     // fetch rejection. Per architecture.md Section 5, treated identically to
     // a non-2xx/malformed response — no retry, straight to fallback.
-    return fallbackResult(context.industry, context.severityHint);
+    return fallbackResult(trigger, context.industry, context.severityHint);
   } finally {
     clearTimeout(timeoutId);
   }

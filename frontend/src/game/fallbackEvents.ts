@@ -11,12 +11,14 @@
 // Consequence signs/magnitudes are directionally reasonable placeholders —
 // final magnitudes are tuned alongside TE-9/EV-3, not here.
 
-import type { EventChoice, Industry, SeverityBand } from "./types";
+import type { EventChoice, EventTrigger, Industry, SeverityBand } from "./types";
 
 export interface FallbackEventTemplate {
   narrative: string;
   choices: Omit<EventChoice, "id">[];
 }
+
+type SeverityBank = Record<SeverityBand, FallbackEventTemplate[]>;
 
 type TemplateBank = Record<Industry, Record<SeverityBand, FallbackEventTemplate[]>>;
 
@@ -350,20 +352,241 @@ const FALLBACK_EVENT_TEMPLATES: TemplateBank = {
   },
 };
 
+// Investor events (Phase 2) — industry-agnostic (board/funding dynamics are
+// similar across industries). Consequences map to the same cash/debt/customers
+// levers as engineering events.
+const INVESTOR_TEMPLATES: SeverityBank = {
+  low: [
+    {
+      narrative:
+        "One of your angels asks, out of the blue, for a quick update on how things are going. It's friendly, but it's clearly a temperature check.",
+      choices: [
+        {
+          label: "Send a polished metrics update",
+          description: "A little time to put together, but it keeps investors warm for the next round.",
+          consequences: { cashDelta: -500, technicalDebtDelta: 0, customerCountDelta: 0 },
+        },
+        {
+          label: "Fire back a quick honest email",
+          description: "Costs nothing; a couple of investors would have liked more detail.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 0, customerCountDelta: 0 },
+        },
+      ],
+    },
+    {
+      narrative:
+        "An investor offers to make a warm intro to a mid-market company that's a great fit for your product.",
+      choices: [
+        {
+          label: "Take the intro and run a tailored pilot",
+          description: "Some setup cost, but it lands real customers and signals momentum.",
+          consequences: { cashDelta: -1500, technicalDebtDelta: 0, customerCountDelta: 8 },
+        },
+        {
+          label: "Politely defer — you're heads-down",
+          description: "No cost now, but you pass on warm pipeline.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 0, customerCountDelta: 0 },
+        },
+      ],
+    },
+  ],
+  moderate: [
+    {
+      narrative:
+        "At a check-in, a board member zeroes in on your burn rate and asks — pointedly — what your plan is to extend runway.",
+      choices: [
+        {
+          label: "Commit to a leaner spending plan",
+          description: "Reassures the board and trims burn, but pulling back slows some growth bets.",
+          consequences: { cashDelta: 4000, technicalDebtDelta: 0, customerCountDelta: -4 },
+        },
+        {
+          label: "Defend the growth plan and fund a proof point",
+          description: "Spend to show traction and win the argument — costly, but it can accelerate customers.",
+          consequences: { cashDelta: -8000, technicalDebtDelta: 0, customerCountDelta: 10 },
+        },
+      ],
+    },
+    {
+      narrative:
+        "A lead investor is pushing you to hire and spend faster than you're comfortable with — they want to see you 'act like a rocket ship'.",
+      choices: [
+        {
+          label: "Lean in and spend aggressively",
+          description: "Pleases the investor and buys growth, at the cost of runway and some rushed decisions.",
+          consequences: { cashDelta: -9000, technicalDebtDelta: 4, customerCountDelta: 12 },
+        },
+        {
+          label: "Hold the line on your own pace",
+          description: "Protects runway and focus; the investor grumbles but respects conviction.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 0, customerCountDelta: 0 },
+        },
+      ],
+    },
+  ],
+  high: [
+    {
+      narrative:
+        "An emergency board meeting is called over your shrinking runway. Insiders are willing to put in an emergency bridge — with strings attached.",
+      choices: [
+        {
+          label: "Take the emergency bridge",
+          description: "Injects cash to survive, but the terms and distraction cost you some momentum.",
+          consequences: { cashDelta: 30000, technicalDebtDelta: 0, customerCountDelta: -6 },
+        },
+        {
+          label: "Slash costs to extend runway independently",
+          description: "Keeps you off the bridge's terms, but deep cuts sting the customer pipeline.",
+          consequences: { cashDelta: 12000, technicalDebtDelta: 2, customerCountDelta: -15 },
+        },
+      ],
+    },
+    {
+      narrative:
+        "Your lead investor signals a down round is coming unless you hit aggressive numbers this quarter — the whole cap table is watching.",
+      choices: [
+        {
+          label: "Fund an all-out growth sprint to hit the numbers",
+          description: "Very expensive, but a big customer push can change the narrative.",
+          consequences: { cashDelta: -22000, technicalDebtDelta: 3, customerCountDelta: 25 },
+        },
+        {
+          label: "Accept the down-round reality and regroup",
+          description: "Cheaper and honest, but morale and momentum take a hit.",
+          consequences: { cashDelta: -3000, technicalDebtDelta: 0, customerCountDelta: -8 },
+        },
+      ],
+    },
+  ],
+};
+
+// People events (Phase 2) — industry-agnostic team/culture dynamics. Only fire
+// once you have employees (see eventCategory.ts).
+const PEOPLE_TEMPLATES: SeverityBank = {
+  low: [
+    {
+      narrative:
+        "A motivated engineer asks for one day a week to explore a passion project loosely related to your product.",
+      choices: [
+        {
+          label: "Approve the 20% time",
+          description: "A little focus split now, but energized engineers ship cleaner work.",
+          consequences: { cashDelta: 0, technicalDebtDelta: -4, customerCountDelta: 0 },
+        },
+        {
+          label: "Keep everyone on the roadmap",
+          description: "Maximum focus this week; a slightly deflated engineer.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 0, customerCountDelta: 0 },
+        },
+      ],
+    },
+    {
+      narrative:
+        "Two of your engineers are bickering over code style in every pull request, and reviews are dragging.",
+      choices: [
+        {
+          label: "Adopt a shared linter and style guide",
+          description: "A small setup cost that ends the arguments and tightens the codebase.",
+          consequences: { cashDelta: -800, technicalDebtDelta: -5, customerCountDelta: 0 },
+        },
+        {
+          label: "Let them sort it out themselves",
+          description: "Free, but the friction keeps slowing reviews and adds sloppy compromises.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 4, customerCountDelta: 0 },
+        },
+      ],
+    },
+  ],
+  moderate: [
+    {
+      narrative:
+        "You get wind that a strong senior engineer has been quietly interviewing elsewhere.",
+      choices: [
+        {
+          label: "Make a real counter-offer to keep them",
+          description: "Costs cash, but you retain hard-won institutional knowledge.",
+          consequences: { cashDelta: -7000, technicalDebtDelta: -3, customerCountDelta: 0 },
+        },
+        {
+          label: "Wish them well and let them go",
+          description: "No spend now, but their departure leaves gaps and slows the team.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 8, customerCountDelta: -3 },
+        },
+      ],
+    },
+    {
+      narrative:
+        "After a long crunch, the whole team is running on fumes — bugs are creeping in and morale is low.",
+      choices: [
+        {
+          label: "Give everyone a paid recharge week",
+          description: "Costs a week of payroll for no output, but a rested team writes better code.",
+          consequences: { cashDelta: -6000, technicalDebtDelta: -6, customerCountDelta: 0 },
+        },
+        {
+          label: "Push through the deadline",
+          description: "Keeps shipping now, but burnout piles on mistakes and quiet resentment.",
+          consequences: { cashDelta: 0, technicalDebtDelta: 9, customerCountDelta: -4 },
+        },
+      ],
+    },
+  ],
+  high: [
+    {
+      narrative:
+        "Your lead engineer quits abruptly, taking critical, undocumented knowledge of core systems with them.",
+      choices: [
+        {
+          label: "Pay to backfill fast and document everything",
+          description: "Expensive, but you contain the knowledge loss before it spreads.",
+          consequences: { cashDelta: -15000, technicalDebtDelta: 6, customerCountDelta: 0 },
+        },
+        {
+          label: "Promote from within and absorb the gap",
+          description: "Cheaper, but the team stumbles through the unfamiliar systems for a while.",
+          consequences: { cashDelta: -2000, technicalDebtDelta: 14, customerCountDelta: -6 },
+        },
+      ],
+    },
+    {
+      narrative:
+        "A viral post accuses the company of a burnout-driven, toxic culture. It's spreading, and candidates are noticing.",
+      choices: [
+        {
+          label: "Invest in real culture changes and respond openly",
+          description: "Costly and slow, but it genuinely repairs morale and your reputation.",
+          consequences: { cashDelta: -12000, technicalDebtDelta: -4, customerCountDelta: -4 },
+        },
+        {
+          label: "Issue a statement and move on",
+          description: "Cheap, but the underlying issues fester and good people keep leaving.",
+          consequences: { cashDelta: -1000, technicalDebtDelta: 10, customerCountDelta: -8 },
+        },
+      ],
+    },
+  ],
+};
+
 /**
- * Selects one fallback template for the given industry + severity band.
- * Variant choice is arbitrary (uses Math.random by default); an optional
- * `rand` fn (returning [0,1)) can be passed for deterministic selection in
- * tests.
+ * Selects one fallback template for the given category + industry + severity.
+ * Engineering templates are industry-specific; Investor/People are
+ * industry-agnostic. Variant choice is arbitrary (Math.random by default); an
+ * optional `rand` fn (returning [0,1)) enables deterministic selection in tests.
  */
 export function selectFallbackEvent(
+  trigger: EventTrigger,
   industry: Industry,
   severityBand: SeverityBand,
   rand: () => number = Math.random,
 ): FallbackEventTemplate {
-  const variants = FALLBACK_EVENT_TEMPLATES[industry][severityBand];
+  const variants =
+    trigger === "investor"
+      ? INVESTOR_TEMPLATES[severityBand]
+      : trigger === "people"
+        ? PEOPLE_TEMPLATES[severityBand]
+        : FALLBACK_EVENT_TEMPLATES[industry][severityBand];
   const index = Math.floor(rand() * variants.length) % variants.length;
   return variants[index];
 }
 
-export { FALLBACK_EVENT_TEMPLATES };
+export { FALLBACK_EVENT_TEMPLATES, INVESTOR_TEMPLATES, PEOPLE_TEMPLATES };

@@ -9,13 +9,20 @@
 // dismiss affordance and no backdrop-click-to-close handler, so there is no
 // way to advance without picking one of the rendered choices (FE-14 AC).
 
-import type { EventChoice, EventLogRecord } from "@/src/game/types";
+import type { EventChoice, EventLogRecord, EventTrigger } from "@/src/game/types";
 import { formatCurrency } from "@/components/dashboard/formatters";
 
 export interface EventCardProps {
   event: EventLogRecord;
   onChoose: (choiceId: string) => void;
 }
+
+// Per-category header styling (icon, label, and a reserved status tint).
+const CATEGORY: Record<EventTrigger, { icon: string; label: string; color: string; soft: string }> = {
+  engineering: { icon: "⚙", label: "Engineering incident", color: "var(--warn)", soft: "var(--warn-soft)" },
+  investor: { icon: "💼", label: "Investor relations", color: "var(--accent)", soft: "var(--accent-soft)" },
+  people: { icon: "👥", label: "People & team", color: "var(--good)", soft: "var(--good-soft)" },
+};
 
 function ConsequenceChip({
   label,
@@ -87,26 +94,31 @@ export function EventCard({ event, onChoose }: EventCardProps) {
         className="anim-pop card flex w-full max-w-lg flex-col overflow-hidden"
         style={{ boxShadow: "var(--shadow-lg)" }}
       >
-        {/* Header band */}
-        <div
-          className="flex items-center gap-3 px-6 py-4"
-          style={{ background: "var(--warn-soft)", borderBottom: "1px solid var(--border)" }}
-        >
-          <span
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-lg"
-            style={{ background: "var(--warn-soft)", color: "var(--warn)", border: "1px solid color-mix(in srgb, var(--warn) 35%, transparent)" }}
-            aria-hidden
-          >
-            ⚙
-          </span>
-          <div className="flex flex-col">
-            <span className="eyebrow" style={{ color: "var(--warn)" }}>Engineering incident</span>
-            <span className="text-sm font-semibold" style={{ color: "var(--ink)" }}>Week {event.week}</span>
-          </div>
-          {event.source === "ai" && (
-            <span className="pill pill-muted ml-auto" title="AI-generated narrative">AI</span>
-          )}
-        </div>
+        {/* Header band (category-tinted) */}
+        {(() => {
+          const cat = CATEGORY[event.trigger] ?? CATEGORY.engineering;
+          return (
+            <div
+              className="flex items-center gap-3 px-6 py-4"
+              style={{ background: cat.soft, borderBottom: "1px solid var(--border)" }}
+            >
+              <span
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-lg"
+                style={{ background: cat.soft, color: cat.color, border: `1px solid color-mix(in srgb, ${cat.color} 35%, transparent)` }}
+                aria-hidden
+              >
+                {cat.icon}
+              </span>
+              <div className="flex flex-col">
+                <span className="eyebrow" style={{ color: cat.color }}>{cat.label}</span>
+                <span className="text-sm font-semibold" style={{ color: "var(--ink)" }}>Week {event.week}</span>
+              </div>
+              {event.source === "ai" && (
+                <span className="pill pill-muted ml-auto" title="AI-generated narrative">AI</span>
+              )}
+            </div>
+          );
+        })()}
 
         <div className="flex flex-col gap-4 p-6">
           <p className="text-[15px] leading-relaxed" style={{ color: "var(--ink)" }}>

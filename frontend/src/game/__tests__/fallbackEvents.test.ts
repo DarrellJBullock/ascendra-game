@@ -38,15 +38,15 @@ describe("fallback event template bank (CT-1)", () => {
   });
 
   it("selectFallbackEvent is deterministic given a fixed rand function", () => {
-    const first = selectFallbackEvent("AI", "high", () => 0);
-    const second = selectFallbackEvent("AI", "high", () => 0);
+    const first = selectFallbackEvent("engineering", "AI", "high", () => 0);
+    const second = selectFallbackEvent("engineering", "AI", "high", () => 0);
     expect(first).toEqual(second);
   });
 
   it("selectFallbackEvent picks different variants for different rand values", () => {
     const variants = FALLBACK_EVENT_TEMPLATES.Fintech.moderate;
-    const first = selectFallbackEvent("Fintech", "moderate", () => 0);
-    const last = selectFallbackEvent("Fintech", "moderate", () => 0.999);
+    const first = selectFallbackEvent("engineering", "Fintech", "moderate", () => 0);
+    const last = selectFallbackEvent("engineering", "Fintech", "moderate", () => 0.999);
     expect(first).toEqual(variants[0]);
     expect(last).toEqual(variants[variants.length - 1]);
   });
