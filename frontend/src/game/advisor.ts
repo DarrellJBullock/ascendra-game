@@ -82,13 +82,15 @@ export interface AdvisorResult {
   source: "ai" | "fallback";
 }
 
-/** Sends a question to the advisor; never throws — returns a fallback tip on any
- * failure (network, non-2xx, timeout). */
-export async function askAdvisor(
+/** Low-level advisor/board call. Returns the reply string, or null on ANY
+ * failure (network, non-2xx, timeout, empty). Shared by the advisor chat and
+ * board meetings (which pass mode "board"). */
+export async function fetchAdvisorReply(
   state: GameState,
   question: string,
   history: AdvisorMessage[],
-): Promise<AdvisorResult> {
+  mode: "advisor" | "board" = "advisor",
+): Promise<string | null> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
@@ -99,18 +101,30 @@ export async function askAdvisor(
         context: buildAdvisorContext(state),
         question,
         history: history.slice(-8),
+        mode,
       }),
       signal: controller.signal,
     });
-    if (!response.ok) return { reply: localAdvisorFallback(state), source: "fallback" };
+    if (!response.ok) return null;
     const body = (await response.json()) as { reply?: unknown };
-    if (typeof body.reply !== "string" || body.reply.trim().length === 0) {
-      return { reply: localAdvisorFallback(state), source: "fallback" };
-    }
-    return { reply: body.reply, source: "ai" };
+    if (typeof body.reply !== "string" || body.reply.trim().length === 0) return null;
+    return body.reply;
   } catch {
-    return { reply: localAdvisorFallback(state), source: "fallback" };
+    return null;
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+/** Sends a question to the advisor; never throws — returns a fallback tip on any
+ * failure (network, non-2xx, timeout). */
+export async function askAdvisor(
+  state: GameState,
+  question: string,
+  history: AdvisorMessage[],
+): Promise<AdvisorResult> {
+  const reply = await fetchAdvisorReply(state, question, history, "advisor");
+  return reply === null
+    ? { reply: localAdvisorFallback(state), source: "fallback" }
+    : { reply, source: "ai" };
 }

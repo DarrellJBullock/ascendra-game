@@ -93,6 +93,8 @@ class AdvisorRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=2000)
     # Optional recent turns for continuity; capped to keep prompts bounded.
     history: list[AdvisorMessage] = Field(default_factory=list, max_length=12)
+    # "advisor" = 1:1 mentor voice; "board" = quarterly boardroom review voice.
+    mode: Literal["advisor", "board"] = "advisor"
 
 
 class AdvisorResponse(BaseModel):

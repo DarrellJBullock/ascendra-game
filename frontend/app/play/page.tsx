@@ -26,6 +26,7 @@ import MarketingPanel from "@/components/marketing/MarketingPanel";
 import FinancialsButton from "@/components/financials/FinancialsButton";
 import CompetitorsButton from "@/components/competitors/CompetitorsButton";
 import AdvisorButton from "@/components/advisor/AdvisorButton";
+import BoardButton from "@/components/board/BoardButton";
 import CopyRunButton from "@/components/playtest/CopyRunButton";
 import { Wordmark } from "@/components/brand/Wordmark";
 
@@ -164,6 +165,7 @@ export default function PlayPage() {
         <ExitsBanner />
 
         <div className="flex justify-end gap-2">
+          <BoardButton />
           <AdvisorButton />
           <CompetitorsButton />
           <FinancialsButton />
