@@ -23,6 +23,7 @@ import TeamPanel from "@/components/team/TeamPanel";
 import ExitsBanner from "@/components/exits/ExitsBanner";
 import SegmentsPanel from "@/components/segments/SegmentsPanel";
 import MarketingPanel from "@/components/marketing/MarketingPanel";
+import FinancialsButton from "@/components/financials/FinancialsButton";
 import CopyRunButton from "@/components/playtest/CopyRunButton";
 import { Wordmark } from "@/components/brand/Wordmark";
 
@@ -159,6 +160,10 @@ export default function PlayPage() {
         )}
 
         <ExitsBanner />
+
+        <div className="flex justify-end">
+          <FinancialsButton />
+        </div>
 
         <MetricsPanel metrics={state.metrics} previous={previous} />
 
