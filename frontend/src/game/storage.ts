@@ -31,6 +31,7 @@ function normalizeLoadedState(state: GameState): GameState {
     employees: state.employees ?? [],
     segmentFocus: state.segmentFocus ?? "smb",
     marketingActions: state.marketingActions ?? [],
+    competitors: state.competitors ?? [],
     fundraisingOffers: state.fundraisingOffers ?? [],
   };
 }

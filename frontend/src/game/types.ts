@@ -89,6 +89,26 @@ export interface GameMetrics {
  * churn, expansion revenue, and support cost. */
 export type CustomerSegment = "smb" | "midmarket" | "enterprise" | "government";
 
+/** Phase 3 — Competitor Intelligence. A tracked rival in the market. Stats are
+ * stored as-of `generatedWeek`; the current values are derived by evolving them
+ * forward (competitors.ts), so no per-week storage or engine coupling is needed.
+ * Generated lazily when the player first opens the intelligence view — the
+ * simulation never touches this, so it can't affect balance. */
+export type CompetitorPriceTier = "budget" | "mid" | "premium";
+
+export interface Competitor {
+  id: string;
+  name: string;
+  archetype: string; // short descriptor, e.g. "Well-funded challenger"
+  priceTier: CompetitorPriceTier;
+  generatedWeek: number;
+  quality0: number; // product quality at generation (0-100)
+  funding0: number; // total raised at generation ($)
+  size0: number; // relative customer-base size at generation
+  qualityTrend: number; // per-week quality delta
+  sizeTrend: number; // per-week fractional size growth (can be negative)
+}
+
 /** Phase 3 — Marketing campaign types. Paid ads buy customers now; content/SEO
  * build lasting brand; social is cheap and balanced; partnerships are a big
  * brand jump. */
@@ -268,6 +288,9 @@ export interface GameState {
   /** Phase 3 — Marketing. Log of campaigns run (at most one per week); drives the
    * once-per-week gate and lifetime CAC. Optional for save-compat. */
   marketingActions?: MarketingActionRecord[];
+  /** Phase 3 — Competitor Intelligence. The tracked rival set, generated lazily
+   * when the player first opens the intelligence view. Optional for save-compat. */
+  competitors?: Competitor[];
   // Phase 2 added two player-chosen exit wins: "acquired" (take an acquisition
   // offer) and "lifestyle" (settle as a sustainable, profitable business),
   // alongside the automatic "success" ($1M valuation) and "bankrupt" end states.

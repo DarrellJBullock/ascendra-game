@@ -58,6 +58,7 @@ export function createNewGameState(input: NewGameInput): GameState {
     employees: [],
     segmentFocus: "smb",
     marketingActions: [],
+    competitors: [], // generated lazily on first intelligence-view open
     gameStatus: "in_progress",
     pendingEngineeringEvent: null,
     sessionSeed: Math.floor(Math.random() * 0xffffffff),
