@@ -20,6 +20,7 @@ import { EndScreen } from "@/components/endstates/EndScreen";
 import FundraisingPanel from "@/components/fundraising/FundraisingPanel";
 import ProductPanel from "@/components/product/ProductPanel";
 import TeamPanel from "@/components/team/TeamPanel";
+import CopyRunButton from "@/components/playtest/CopyRunButton";
 import { Wordmark } from "@/components/brand/Wordmark";
 
 const SUCCESS_VALUATION = 1_000_000;
@@ -162,6 +163,12 @@ export default function PlayPage() {
           <ProductPanel />
           <TeamPanel />
           <FundraisingPanel />
+        </div>
+
+        {/* QA-2 playtest scaffolding: lets a tester copy their exact run stats
+            before they stop (even mid-game). Removable after the playtest. */}
+        <div className="flex justify-center pt-1">
+          <CopyRunButton state={state} variant="subtle" />
         </div>
       </main>
 

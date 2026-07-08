@@ -11,6 +11,7 @@ import { useGameStore } from "@/src/game/store";
 import { clearGameState } from "@/src/game/storage";
 import { formatCurrency, formatNumber } from "../dashboard/formatters";
 import { Wordmark } from "@/components/brand/Wordmark";
+import CopyRunButton from "@/components/playtest/CopyRunButton";
 
 export interface EndScreenProps {
   status: "bankrupt" | "success";
@@ -82,9 +83,13 @@ export function EndScreen({ status, state }: EndScreenProps) {
           ))}
         </dl>
 
-        <button type="button" onClick={handleNewGame} className="btn btn-primary w-full px-4 py-3.5 text-sm">
-          Found a new company →
-        </button>
+        <div className="flex w-full flex-col gap-2.5">
+          <button type="button" onClick={handleNewGame} className="btn btn-primary w-full px-4 py-3.5 text-sm">
+            Found a new company →
+          </button>
+          {/* QA-2 playtest: copy the finished run's stats for the facilitator. */}
+          <CopyRunButton state={state} label="Copy run summary" />
+        </div>
       </div>
     </div>
   );
