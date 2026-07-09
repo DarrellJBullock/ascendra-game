@@ -17,6 +17,7 @@ import {
   type CloudSaveMeta,
 } from "@/src/game/cloudSaves";
 import AuthModal from "./AuthModal";
+import GoogleButton from "./GoogleButton";
 
 const OUTCOME_LABEL: Record<string, string> = {
   in_progress: "in progress", bankrupt: "bankrupt", success: "won", ipo: "IPO",
@@ -54,12 +55,19 @@ export default function CloudSavesList() {
   if (!user) {
     return (
       <>
-        <div className="card flex flex-col items-center gap-3 p-5 text-center sm:flex-row sm:text-left">
-          <span className="text-2xl" aria-hidden>☁️</span>
-          <p className="flex-1 text-sm" style={{ color: "var(--ink-2)" }}>
-            Sign in to save your companies to the cloud and pick up on any device.
-          </p>
-          <button type="button" onClick={() => setModalOpen(true)} className="btn btn-primary px-4 py-2 text-sm">Sign in</button>
+        <div className="card flex flex-col gap-3.5 p-5">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl" aria-hidden>☁️</span>
+            <p className="flex-1 text-sm" style={{ color: "var(--ink-2)" }}>
+              Sign in to save your companies to the cloud and pick up on any device.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <GoogleButton className="flex-1" />
+            <button type="button" onClick={() => setModalOpen(true)} className="btn btn-ghost flex-1 px-4 py-2.5 text-sm">
+              Sign in with email
+            </button>
+          </div>
         </div>
         {modalOpen && <AuthModal onClose={() => setModalOpen(false)} />}
       </>

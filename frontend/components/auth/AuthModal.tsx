@@ -5,9 +5,10 @@
 import { useState } from "react";
 
 import { useAuth } from "@/src/game/auth";
+import GoogleButton from "./GoogleButton";
 
 export default function AuthModal({ onClose }: { onClose: () => void }) {
-  const { signInWithEmail, signInWithGoogle } = useAuth();
+  const { signInWithEmail } = useAuth();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -43,9 +44,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
           </div>
         ) : (
           <>
-            <button type="button" onClick={() => void signInWithGoogle()} className="btn btn-ghost w-full px-4 py-2.5 text-sm">
-              Continue with Google
-            </button>
+            <GoogleButton className="w-full" />
             <div className="flex items-center gap-3 text-[11px]" style={{ color: "var(--ink-3)" }}>
               <span className="h-px flex-1" style={{ background: "var(--border)" }} /> or <span className="h-px flex-1" style={{ background: "var(--border)" }} />
             </div>
