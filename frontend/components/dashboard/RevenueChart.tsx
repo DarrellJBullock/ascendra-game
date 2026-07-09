@@ -119,8 +119,13 @@ export function RevenueChart({ turnHistory, currentMrr }: RevenueChartProps) {
           <AreaChart data={data} margin={{ top: 10, right: 8, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id="mrrFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.35} />
+                <stop offset="0%" stopColor="var(--accent-2)" stopOpacity={0.42} />
+                <stop offset="55%" stopColor="var(--accent)" stopOpacity={0.14} />
                 <stop offset="100%" stopColor="var(--accent)" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="mrrStroke" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="var(--accent-2)" />
+                <stop offset="100%" stopColor="var(--accent)" />
               </linearGradient>
             </defs>
             <CartesianGrid
@@ -149,13 +154,14 @@ export function RevenueChart({ turnHistory, currentMrr }: RevenueChartProps) {
             <Area
               type="monotone"
               dataKey="mrr"
-              stroke="var(--accent)"
-              strokeWidth={2}
+              stroke="url(#mrrStroke)"
+              strokeWidth={2.5}
               fill="url(#mrrFill)"
               dot={false}
               activeDot={{ r: 4, fill: "var(--accent)", stroke: "var(--surface)", strokeWidth: 2 }}
               isAnimationActive
-              animationDuration={500}
+              animationDuration={700}
+              animationEasing="ease-out"
             />
           </AreaChart>
         </ResponsiveContainer>

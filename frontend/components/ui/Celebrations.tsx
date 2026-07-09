@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useGameStore } from "@/src/game/store";
+import Confetti from "./Confetti";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
 const ROUND_LABEL: Record<string, string> = {
@@ -21,6 +22,7 @@ function custTier(n: number): number {
 export default function Celebrations() {
   const state = useGameStore((s) => s.state);
   const [toast, setToast] = useState<string | null>(null);
+  const [confetti, setConfetti] = useState(false);
   const prev = useRef<{ raises: number; profitable: boolean; tier: number } | null>(null);
 
   useEffect(() => {
@@ -36,6 +38,7 @@ export default function Celebrations() {
       if (snap.raises > p.raises) {
         const last = accepted[accepted.length - 1];
         setToast(`🎉 Raised ${money(last.offeredCash)} — ${ROUND_LABEL[last.roundType] ?? last.roundType} round`);
+        setConfetti(true);
       } else if (snap.profitable && !p.profitable) {
         setToast("🟢 You've reached profitability!");
       } else if (snap.tier > p.tier) {
@@ -51,10 +54,19 @@ export default function Celebrations() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  if (!toast) return null;
+  useEffect(() => {
+    if (!confetti) return;
+    const t = setTimeout(() => setConfetti(false), 2600);
+    return () => clearTimeout(t);
+  }, [confetti]);
+
+  if (!toast && !confetti) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
+    <>
+      {confetti && <Confetti />}
+      {toast && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
       <div
         className="toast-in shine flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold"
         style={{
@@ -64,8 +76,10 @@ export default function Celebrations() {
           boxShadow: "var(--shadow-lg)",
         }}
       >
-        {toast}
-      </div>
-    </div>
+            {toast}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

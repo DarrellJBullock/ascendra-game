@@ -327,7 +327,21 @@ body, .card, .btn, .chip, .field, .pill {
   animation: ascendra-shine 2.4s ease-in-out infinite;
 }
 
+/* Staggered event-choice reveal (cinematic event cards). */
+@keyframes ascendra-choice-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.choice-in { animation: ascendra-choice-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Confetti fall (funding announcement). */
+@keyframes ascendra-confetti {
+  from { opacity: 1; transform: translateY(-12vh) rotate(0deg); }
+  to { opacity: 0; transform: translateY(88vh) rotate(720deg); }
+}
+.confetti-piece { animation: ascendra-confetti linear forwards; }
+
 @media (prefers-reduced-motion: reduce) {
   body, .card, .btn, .chip, .field, .pill { transition: none; }
-  .toast-in, .toast-out, .shine { animation: none; }
+  .toast-in, .toast-out, .shine, .choice-in, .confetti-piece { animation: none; }
 }

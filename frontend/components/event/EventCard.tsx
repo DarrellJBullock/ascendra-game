@@ -51,9 +51,11 @@ function ConsequenceChip({
 function ChoiceButton({
   choice,
   onChoose,
+  index,
 }: {
   choice: EventChoice;
   onChoose: (choiceId: string) => void;
+  index: number;
 }) {
   const { cashDelta, technicalDebtDelta, customerCountDelta } = choice.consequences;
 
@@ -61,8 +63,8 @@ function ChoiceButton({
     <button
       type="button"
       onClick={() => onChoose(choice.id)}
-      className="group flex flex-col gap-1.5 rounded-xl p-4 text-left transition-all"
-      style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
+      className="choice-in group flex flex-col gap-1.5 rounded-xl p-4 text-left transition-all hover:-translate-y-0.5"
+      style={{ background: "var(--surface-2)", border: "1px solid var(--border)", animationDelay: `${140 + index * 90}ms` }}
     >
       <span className="flex items-center justify-between gap-2">
         <span className="text-sm font-semibold" style={{ color: "var(--ink)" }}>{choice.label}</span>
@@ -87,48 +89,50 @@ function ChoiceButton({
 }
 
 export function EventCard({ event, onChoose }: EventCardProps) {
+  const cat = CATEGORY[event.trigger] ?? CATEGORY.engineering;
   return (
     <div
       className="anim-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(4, 6, 12, 0.6)", backdropFilter: "blur(6px)" }}
+      style={{ background: "rgba(4, 6, 12, 0.64)", backdropFilter: "blur(7px)" }}
     >
       <div
         className="anim-pop card flex w-full max-w-lg flex-col overflow-hidden"
-        style={{ boxShadow: "var(--shadow-lg)" }}
+        style={{
+          boxShadow: `0 0 0 1px color-mix(in srgb, ${cat.color} 22%, transparent), var(--shadow-lg), 0 24px 70px -26px color-mix(in srgb, ${cat.color} 50%, transparent)`,
+        }}
       >
-        {/* Header band (category-tinted) */}
-        {(() => {
-          const cat = CATEGORY[event.trigger] ?? CATEGORY.engineering;
-          return (
-            <div
-              className="flex items-center gap-3 px-6 py-4"
-              style={{ background: cat.soft, borderBottom: "1px solid var(--border)" }}
-            >
-              <span
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-lg"
-                style={{ background: cat.soft, color: cat.color, border: `1px solid color-mix(in srgb, ${cat.color} 35%, transparent)` }}
-                aria-hidden
-              >
-                {cat.icon}
-              </span>
-              <div className="flex flex-col">
-                <span className="eyebrow" style={{ color: cat.color }}>{cat.label}</span>
-                <span className="text-sm font-semibold" style={{ color: "var(--ink)" }}>Week {event.week}</span>
-              </div>
-              {event.source === "ai" && (
-                <span className="pill pill-muted ml-auto" title="AI-generated narrative">AI</span>
-              )}
-            </div>
-          );
-        })()}
+        {/* Header band (category-tinted, cinematic sheen) */}
+        <div
+          className="relative flex items-center gap-3 overflow-hidden px-6 py-5"
+          style={{
+            background: `linear-gradient(135deg, ${cat.soft}, transparent 85%)`,
+            borderBottom: `1px solid color-mix(in srgb, ${cat.color} 22%, var(--border))`,
+          }}
+        >
+          <span aria-hidden className="shine pointer-events-none absolute inset-0" />
+          <span
+            className="relative grid h-11 w-11 shrink-0 place-items-center rounded-xl text-xl"
+            style={{ background: cat.soft, color: cat.color, border: `1px solid color-mix(in srgb, ${cat.color} 40%, transparent)` }}
+            aria-hidden
+          >
+            {cat.icon}
+          </span>
+          <div className="relative flex flex-col">
+            <span className="eyebrow" style={{ color: cat.color }}>{cat.label}</span>
+            <span className="text-sm font-semibold" style={{ color: "var(--ink)" }}>Week {event.week}</span>
+          </div>
+          {event.source === "ai" && (
+            <span className="pill pill-muted relative ml-auto" title="AI-generated narrative">AI</span>
+          )}
+        </div>
 
         <div className="flex flex-col gap-4 p-6">
           <p className="text-[15px] leading-relaxed" style={{ color: "var(--ink)" }}>
             {event.narrative}
           </p>
           <div className="flex flex-col gap-2.5">
-            {event.choices.map((choice) => (
-              <ChoiceButton key={choice.id} choice={choice} onChoose={onChoose} />
+            {event.choices.map((choice, i) => (
+              <ChoiceButton key={choice.id} choice={choice} onChoose={onChoose} index={i} />
             ))}
           </div>
         </div>

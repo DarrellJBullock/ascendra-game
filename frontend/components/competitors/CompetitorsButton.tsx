@@ -15,6 +15,7 @@ import {
 } from "@/src/game/competitors";
 import { blendedPrice, DEFAULT_SEGMENT_MIX } from "@/src/game/segments";
 import { formatCurrency } from "@/components/dashboard/formatters";
+import PositioningMap, { type MapPoint } from "./PositioningMap";
 
 const TIER_LABEL: Record<string, string> = { budget: "Budget", mid: "Mid", premium: "Premium" };
 const MOMENTUM: Record<number, { icon: string; color: string }> = {
@@ -44,6 +45,28 @@ export default function CompetitorsButton() {
   const playerName = `You · ${state.company.name}`;
   const rows = marketShares(competitors, state.metrics.customerCount, week, playerName);
   const playerTier = priceTierForPrice(blendedPrice(state.metrics.segmentMix ?? DEFAULT_SEGMENT_MIX));
+
+  const mapPoints: MapPoint[] = [
+    ...competitors.map((c) => {
+      const snap = evolveCompetitor(c, week);
+      return {
+        id: c.id,
+        name: c.name,
+        share: rows.find((r) => r.id === c.id)?.sharePct ?? 0,
+        quality: snap.quality,
+        size: snap.funding,
+        isPlayer: false,
+      };
+    }),
+    {
+      id: "player",
+      name: "You",
+      share: rows.find((r) => r.isPlayer)?.sharePct ?? 0,
+      quality: state.metrics.productQuality,
+      size: Math.max(1, state.metrics.valuation),
+      isPlayer: true,
+    },
+  ];
 
   return (
     <>
@@ -84,6 +107,12 @@ export default function CompetitorsButton() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Positioning map */}
+            <div className="card p-5">
+              <h3 className="eyebrow mb-2" style={{ color: "var(--accent)" }}>Positioning</h3>
+              <PositioningMap points={mapPoints} />
             </div>
 
             {/* Rivals detail */}
