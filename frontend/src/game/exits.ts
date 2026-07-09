@@ -15,7 +15,11 @@
 // offered to the player, who accepts via the dashboard. Accepting just sets
 // gameStatus, which the play page reads to show the end screen.
 
-import { ACQUISITION_MIN_VALUATION, ACQUISITION_PREMIUM } from "./constants";
+import {
+  ACQUISITION_MIN_VALUATION,
+  ACQUISITION_PREMIUM,
+  IPO_VALUATION_THRESHOLD,
+} from "./constants";
 import type { GameState } from "./types";
 
 export interface AcquisitionOffer {
@@ -53,4 +57,21 @@ export function acceptAcquisition(state: GameState): GameState {
 export function goLifestyle(state: GameState): GameState {
   if (!canGoLifestyle(state)) return state;
   return { ...state, gameStatus: "lifestyle" };
+}
+
+/** Phase 4 — the IPO exit, unlocked at the $1M valuation line (the primary win).
+ * A one-click "go public"; keeping the game running instead lets the player push
+ * for the $1B Unicorn. */
+export function canIpo(state: GameState): boolean {
+  return (
+    state.gameStatus === "in_progress" &&
+    state.metrics.valuation >= IPO_VALUATION_THRESHOLD
+  );
+}
+
+/** Take the company public — ends the game as an "ipo" win. No-op if not yet at
+ * the IPO valuation. */
+export function goPublic(state: GameState): GameState {
+  if (!canIpo(state)) return state;
+  return { ...state, gameStatus: "ipo" };
 }

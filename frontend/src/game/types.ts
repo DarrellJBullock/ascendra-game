@@ -291,10 +291,18 @@ export interface GameState {
   /** Phase 3 — Competitor Intelligence. The tracked rival set, generated lazily
    * when the player first opens the intelligence view. Optional for save-compat. */
   competitors?: Competitor[];
-  // Phase 2 added two player-chosen exit wins: "acquired" (take an acquisition
-  // offer) and "lifestyle" (settle as a sustainable, profitable business),
-  // alongside the automatic "success" ($1M valuation) and "bankrupt" end states.
-  gameStatus: "in_progress" | "bankrupt" | "success" | "acquired" | "lifestyle";
+  // Win/end states. "bankrupt" + "unicorn" ($1B) are automatic; "ipo" ($1M),
+  // "acquired" ($400k), and "lifestyle" (profitable) are player-chosen exits.
+  // "success" is retained for backward-compat with pre-Phase-4 saves (the old
+  // automatic $1M win); it is no longer produced but still renders as a win.
+  gameStatus:
+    | "in_progress"
+    | "bankrupt"
+    | "success"
+    | "acquired"
+    | "lifestyle"
+    | "ipo"
+    | "unicorn";
   /**
    * Non-null between "an Engineering event rolled this week" and "the player
    * has chosen a resolution for it." Additive field (Epic B/C, TE-7) — see

@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { createNewGameState } from "@/src/game/factory";
 import { ACQUISITION_MIN_VALUATION } from "@/src/game/constants";
-import { acceptAcquisition, acquisitionOffer, canGoLifestyle, goLifestyle } from "@/src/game/exits";
+import { acceptAcquisition, acquisitionOffer, canGoLifestyle, canIpo, goLifestyle, goPublic } from "@/src/game/exits";
+import { IPO_VALUATION_THRESHOLD } from "@/src/game/constants";
 import type { GameState } from "@/src/game/types";
 
 function state(overrides: Partial<GameState["metrics"]> = {}): GameState {
@@ -33,6 +34,14 @@ describe("endgame exits (Phase 2)", () => {
     expect(goLifestyle(state({ burnRate: -1500, cash: 50000 })).gameStatus).toBe("lifestyle");
     const burning = state({ burnRate: 3000, cash: 50000 });
     expect(goLifestyle(burning)).toBe(burning);
+  });
+
+  it("IPO unlocks at the $1M line and going public ends as an 'ipo' win", () => {
+    expect(canIpo(state({ valuation: IPO_VALUATION_THRESHOLD - 1 }))).toBe(false);
+    expect(canIpo(state({ valuation: IPO_VALUATION_THRESHOLD }))).toBe(true);
+    expect(goPublic(state({ valuation: IPO_VALUATION_THRESHOLD * 2 })).gameStatus).toBe("ipo");
+    const below = state({ valuation: IPO_VALUATION_THRESHOLD - 1 });
+    expect(goPublic(below)).toBe(below); // no-op below the line
   });
 
   it("exits are unavailable once the game has ended", () => {

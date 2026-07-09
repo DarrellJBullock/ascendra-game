@@ -16,7 +16,11 @@ function money(v: number): string {
 export function buildRunSummary(state: GameState): string {
   const m = state.metrics;
   const outcome =
-    state.gameStatus === "success"
+    state.gameStatus === "unicorn"
+      ? "WON (🦄 unicorn — $1B)"
+      : state.gameStatus === "ipo"
+        ? "WON (IPO)"
+      : state.gameStatus === "success"
       ? "WON ($1M valuation)"
       : state.gameStatus === "acquired"
         ? "WON (acquired)"

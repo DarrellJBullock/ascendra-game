@@ -114,8 +114,15 @@ export const SERIES_B_MRR_THRESHOLD = 50_000;
 export const ACQUISITION_MIN_VALUATION = 400_000;
 export const ACQUISITION_PREMIUM = 1.2;
 
-/** Valuation threshold for the v1 "Success" end state. */
+/** Valuation at which the primary win unlocks. Phase 4: this is now the IPO
+ * exit threshold (a one-click win) rather than an automatic end — reaching it is
+ * unchanged (the economy is untouched), only what happens there changed. */
 export const SUCCESS_VALUATION_THRESHOLD = 1_000_000; // per spec, not a tuning knob
+export const IPO_VALUATION_THRESHOLD = SUCCESS_VALUATION_THRESHOLD;
+
+/** Phase 4 — the ultimate automatic win: a $1B "Unicorn" valuation, reachable
+ * only by choosing to keep building past the IPO line. */
+export const UNICORN_VALUATION_THRESHOLD = 1_000_000_000;
 
 /** Runway (weeks) below which the dashboard shows a low-runway warning. */
 export const LOW_RUNWAY_WARNING_WEEKS = 4; // per spec, not a tuning knob

@@ -6,7 +6,14 @@
 // as an "acquired" / "lifestyle" win. Self-contained default export.
 
 import { useGameStore } from "@/src/game/store";
-import { acceptAcquisition, acquisitionOffer, canGoLifestyle, goLifestyle } from "@/src/game/exits";
+import {
+  acceptAcquisition,
+  acquisitionOffer,
+  canGoLifestyle,
+  canIpo,
+  goLifestyle,
+  goPublic,
+} from "@/src/game/exits";
 import { formatCurrency } from "@/components/dashboard/formatters";
 
 export default function ExitsBanner() {
@@ -15,12 +22,34 @@ export default function ExitsBanner() {
 
   if (!state) return null;
 
+  const ipo = canIpo(state);
   const acq = acquisitionOffer(state);
   const lifestyle = canGoLifestyle(state);
-  if (!acq.available && !lifestyle) return null;
+  if (!ipo && !acq.available && !lifestyle) return null;
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row">
+      {ipo && (
+        <div
+          className="card shine flex flex-1 items-center gap-3 p-4"
+          style={{ borderColor: "color-mix(in srgb, var(--good) 55%, transparent)", boxShadow: "0 0 0 1px color-mix(in srgb, var(--good) 30%, transparent), var(--shadow)" }}
+        >
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-lg" style={{ background: "var(--good-soft)" }} aria-hidden>🔔</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold" style={{ color: "var(--ink)" }}>
+              Ready to IPO — {formatCurrency(state.metrics.valuation)} valuation
+            </p>
+            <p className="text-[12px]" style={{ color: "var(--ink-3)" }}>Go public for the win, or keep building toward a $1B unicorn.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => applyState(goPublic(state))}
+            className="btn btn-primary shrink-0 px-3 py-2 text-sm"
+          >
+            Go public 🚀
+          </button>
+        </div>
+      )}
       {acq.available && (
         <div
           className="card flex flex-1 items-center gap-3 p-4"

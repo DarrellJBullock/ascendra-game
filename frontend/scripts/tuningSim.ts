@@ -24,6 +24,7 @@ import {
 } from "../src/game/fundraising";
 import { createSeededRng } from "../src/game/rng";
 import { rollEngineeringEvent } from "../src/game/engineeringEvent";
+import { SUCCESS_VALUATION_THRESHOLD } from "../src/game/constants";
 import type { EventChoice, EventLogRecord, GameState } from "../src/game/types";
 
 const WEEKS = 20;
@@ -128,7 +129,11 @@ function runOnce(
 
     state = advanceWeek(state, seed);
 
-    if (state.gameStatus === "success" && successWeek === null) {
+    // Phase 4: the $1M win is now the (player-chosen) IPO line, not an automatic
+    // end state — so measure win pacing as the first week valuation crosses $1M
+    // (the economy/pacing to that point is unchanged). The sim keeps running
+    // past it since the game no longer auto-ends there.
+    if (state.metrics.valuation >= SUCCESS_VALUATION_THRESHOLD && successWeek === null) {
       successWeek = state.metrics.week;
     }
   }
@@ -139,7 +144,7 @@ function runOnce(
     eventCount,
     finalWeek: state.metrics.week,
     bankrupt: state.gameStatus === "bankrupt",
-    success: state.gameStatus === "success",
+    success: successWeek !== null,
     successWeek,
     hitLowRunwayBy25: hitLowRunway || state.gameStatus === "bankrupt",
   };

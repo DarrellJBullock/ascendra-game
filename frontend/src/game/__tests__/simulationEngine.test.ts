@@ -73,11 +73,13 @@ describe("end states (TE-6)", () => {
     expect(checkEndStates(state)).toBe("bankrupt");
   });
 
-  it("triggers success when valuation >= 1,000,000", () => {
+  it("does NOT auto-end at $1M (IPO is a player choice now) but auto-wins Unicorn at $1B", () => {
     const state = freshState();
     state.metrics.cash = 100_000;
-    state.metrics.valuation = 1_000_000;
-    expect(checkEndStates(state)).toBe("success");
+    state.metrics.valuation = 1_000_000; // IPO line — no longer an automatic win
+    expect(checkEndStates(state)).toBe("in_progress");
+    state.metrics.valuation = 1_000_000_000; // $1B — the automatic Unicorn win
+    expect(checkEndStates(state)).toBe("unicorn");
   });
 
   it("stays in_progress otherwise", () => {

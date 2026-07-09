@@ -14,7 +14,7 @@ import { Wordmark } from "@/components/brand/Wordmark";
 import CopyRunButton from "@/components/playtest/CopyRunButton";
 
 export interface EndScreenProps {
-  status: "bankrupt" | "success" | "acquired" | "lifestyle";
+  status: "bankrupt" | "success" | "acquired" | "lifestyle" | "ipo" | "unicorn";
   state: GameState;
 }
 
@@ -26,6 +26,18 @@ export function EndScreen({ status, state }: EndScreenProps) {
   const soft = isWin ? "var(--good-soft)" : "var(--crit-soft)";
 
   const OUTCOME: Record<EndScreenProps["status"], { icon: string; eyebrow: string; title: string; message: string }> = {
+    unicorn: {
+      icon: "🦄",
+      eyebrow: "Unicorn",
+      title: "A $1B company",
+      message: `${state.company.name} crossed a $1,000,000,000 valuation in week ${state.metrics.week}. You built a unicorn — the rarest outcome there is.`,
+    },
+    ipo: {
+      icon: "🔔",
+      eyebrow: "IPO",
+      title: "You took it public",
+      message: `${state.company.name} rang the bell at a ${formatCurrency(state.metrics.valuation)} valuation in week ${state.metrics.week}. A public company — that's the win.`,
+    },
     success: {
       icon: "🏆",
       eyebrow: "Exit reached",
