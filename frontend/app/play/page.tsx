@@ -31,6 +31,8 @@ import NewsButton from "@/components/news/NewsButton";
 import SalesPipelineButton from "@/components/sales/SalesPipelineButton";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import Celebrations from "@/components/ui/Celebrations";
+import AuthButton from "@/components/auth/AuthButton";
+import CloudSync from "@/components/auth/CloudSync";
 import CopyRunButton from "@/components/playtest/CopyRunButton";
 import { Wordmark } from "@/components/brand/Wordmark";
 
@@ -118,6 +120,7 @@ export default function PlayPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <AuthButton />
             <ThemeToggle />
             <span
               className="rounded-full px-3 py-1.5 text-xs font-semibold"
@@ -138,6 +141,7 @@ export default function PlayPage() {
       </header>
 
       <Celebrations />
+      <CloudSync />
 
       <main className="anim-fade-up mx-auto flex w-full max-w-6xl flex-col gap-5 px-6 py-6">
         {/* Goal meter */}
