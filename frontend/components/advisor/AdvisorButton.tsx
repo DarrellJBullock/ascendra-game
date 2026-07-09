@@ -43,7 +43,7 @@ export default function AdvisorButton() {
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="btn btn-ghost px-3 py-2 text-xs" title="Ask your AI advisor">
+      <button type="button" onClick={() => setOpen(true)} className="tool-btn" data-tip="Ask your AI advisor">
         💬 Advisor
       </button>
 

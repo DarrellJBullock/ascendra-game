@@ -39,7 +39,7 @@ export default function BoardButton() {
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="btn btn-ghost px-3 py-2 text-xs" title="Convene a board meeting">
+      <button type="button" onClick={() => setOpen(true)} className="tool-btn" data-tip="Convene a board meeting">
         🏛 Board
       </button>
 

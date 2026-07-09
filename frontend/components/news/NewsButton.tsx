@@ -52,7 +52,7 @@ export default function NewsButton() {
 
   return (
     <>
-      <button type="button" onClick={handleOpen} className="btn btn-ghost px-3 py-2 text-xs" title="Ecosystem news">
+      <button type="button" onClick={handleOpen} className="tool-btn" data-tip="Ecosystem news">
         📰 News
       </button>
 

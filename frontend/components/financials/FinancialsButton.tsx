@@ -56,8 +56,8 @@ export default function FinancialsButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="btn btn-ghost px-3 py-2 text-xs"
-        title="Income statement, cash flow, balance sheet"
+        className="tool-btn"
+        data-tip="Income statement, cash flow, balance sheet"
       >
         📊 Financials
       </button>

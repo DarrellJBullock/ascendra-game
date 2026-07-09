@@ -73,8 +73,8 @@ export default function CompetitorsButton() {
       <button
         type="button"
         onClick={handleOpen}
-        className="btn btn-ghost px-3 py-2 text-xs"
-        title="AI market — competitor landscape"
+        className="tool-btn"
+        data-tip="AI market — competitor landscape"
       >
         🎯 Competitors
       </button>

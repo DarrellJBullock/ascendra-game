@@ -58,39 +58,45 @@ function Tile({
   warn,
   delta,
   accent,
+  hero,
+  tip,
 }: {
   label: string;
   value: ReactNode;
   warn?: boolean;
   delta?: ReactNode;
   accent?: boolean;
+  hero?: boolean;
+  tip?: string;
 }) {
   return (
-    <div
-      className="relative overflow-hidden rounded-xl p-3.5"
-      style={{
-        background: warn ? "var(--crit-soft)" : "var(--surface)",
-        border: `1px solid ${warn ? "color-mix(in srgb, var(--crit) 40%, transparent)" : "var(--border)"}`,
-        boxShadow: "var(--shadow)",
-      }}
-    >
-      {accent && (
-        <span
-          aria-hidden
-          className="absolute inset-x-0 top-0 h-[3px]"
-          style={{ background: "linear-gradient(90deg, var(--accent), var(--accent-2))" }}
-        />
-      )}
-      <div className="eyebrow">{label}</div>
-      <div className="mt-1.5 flex items-end justify-between gap-2">
+    // Outer wrapper carries the tooltip so it isn't clipped by the card's
+    // overflow-hidden (which the accent bar needs).
+    <div className="relative" data-tip={tip}>
+      <div
+        className={`relative overflow-hidden rounded-xl ${hero ? "p-4" : "p-3"}`}
+        style={{
+          background: warn ? "var(--crit-soft)" : "var(--surface)",
+          border: `1px solid ${warn ? "color-mix(in srgb, var(--crit) 40%, transparent)" : "var(--border)"}`,
+          boxShadow: "var(--shadow)",
+        }}
+      >
+        {accent && (
+          <span
+            aria-hidden
+            className="absolute inset-x-0 top-0 h-[3px]"
+            style={{ background: "linear-gradient(90deg, var(--accent), var(--accent-2))" }}
+          />
+        )}
+        <div className="eyebrow">{label}</div>
         <div
-          className="text-xl font-semibold tracking-tight tabular-nums"
+          className={`mt-1.5 font-semibold tracking-tight tabular-nums ${hero ? "text-2xl" : "text-lg"}`}
           style={{ color: warn ? "var(--crit)" : "var(--ink)" }}
         >
           {value}
         </div>
+        {delta !== undefined && <div className="mt-1.5 min-h-[18px]">{delta}</div>}
       </div>
-      <div className="mt-1.5 min-h-[18px]">{delta}</div>
     </div>
   );
 }
@@ -100,70 +106,53 @@ export function MetricsPanel({ metrics, previous }: MetricsPanelProps) {
   const p = previous ?? undefined;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-      <Tile
-        label="Cash"
-        value={<AnimatedNumber value={metrics.cash} format={formatCurrency} />}
-        accent
-        delta={<Delta current={metrics.cash} prev={p?.cash} goodWhenUp fmt="currency" />}
-      />
-      <Tile
-        label="MRR"
-        value={<AnimatedNumber value={metrics.mrr} format={formatCurrency} />}
-        accent
-        delta={<Delta current={metrics.mrr} prev={p?.mrr} goodWhenUp fmt="currency" />}
-      />
-      <Tile
-        label="Valuation"
-        value={<AnimatedNumber value={metrics.valuation} format={formatCurrency} className="text-gradient" />}
-        accent
-        delta={<Delta current={metrics.valuation} prev={p?.valuation} goodWhenUp fmt="currency" />}
-      />
-      <Tile label="Burn rate / wk" value={formatCurrency(metrics.burnRate)} />
-      <Tile
-        label="Runway"
-        value={formatRunway(metrics.runwayWeeks)}
-        warn={lowRunway}
-        delta={
-          lowRunway ? (
-            <span className="pill pill-crit">⚠ critical</span>
-          ) : (
-            <span className="pill pill-good">✓ healthy</span>
-          )
-        }
-      />
-      <Tile
-        label="Customers"
-        value={<AnimatedNumber value={metrics.customerCount} format={formatNumber} />}
-        delta={
-          <Delta current={metrics.customerCount} prev={p?.customerCount} goodWhenUp fmt="number" />
-        }
-      />
-      <Tile
-        label="Technical debt"
-        value={`${Math.round(metrics.technicalDebt)}`}
-        delta={
-          <Delta
-            current={metrics.technicalDebt}
-            prev={p?.technicalDebt}
-            goodWhenUp={false}
-            fmt="number"
-          />
-        }
-      />
-      <Tile
-        label="Product quality"
-        value={`${Math.round(metrics.productQuality)}`}
-        delta={
-          <Delta current={metrics.productQuality} prev={p?.productQuality} goodWhenUp fmt="number" />
-        }
-      />
-      <Tile label="Innovation" value={formatNumber(metrics.innovation)} />
-      <Tile label="Team size" value={formatNumber(metrics.teamSize)} />
-      <Tile
-        label="Founder ownership"
-        value={`${metrics.founderOwnershipPct.toFixed(1)}%`}
-      />
+    <div className="flex flex-col gap-3">
+      {/* Hero row — the metrics that define survival + success */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Tile
+          hero
+          label="Cash"
+          tip="Money in the bank"
+          value={<AnimatedNumber value={metrics.cash} format={formatCurrency} />}
+          accent
+          delta={<Delta current={metrics.cash} prev={p?.cash} goodWhenUp fmt="currency" />}
+        />
+        <Tile
+          hero
+          label="Runway"
+          tip="Weeks of cash left at the current burn"
+          value={formatRunway(metrics.runwayWeeks)}
+          warn={lowRunway}
+          delta={lowRunway ? <span className="pill pill-crit">⚠ critical</span> : <span className="pill pill-good">✓ healthy</span>}
+        />
+        <Tile
+          hero
+          label="MRR"
+          tip="Weekly recurring revenue"
+          value={<AnimatedNumber value={metrics.mrr} format={formatCurrency} />}
+          accent
+          delta={<Delta current={metrics.mrr} prev={p?.mrr} goodWhenUp fmt="currency" />}
+        />
+        <Tile
+          hero
+          label="Valuation"
+          tip="$1M unlocks the IPO exit · $1B is a unicorn"
+          value={<AnimatedNumber value={metrics.valuation} format={formatCurrency} className="text-gradient" />}
+          accent
+          delta={<Delta current={metrics.valuation} prev={p?.valuation} goodWhenUp fmt="currency" />}
+        />
+      </div>
+
+      {/* Secondary strip — at-a-glance context */}
+      <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 lg:grid-cols-7">
+        <Tile label="Customers" tip="Paying customers" value={<AnimatedNumber value={metrics.customerCount} format={formatNumber} />} />
+        <Tile label="Burn / wk" tip="Weekly net burn (expenses − revenue)" value={formatCurrency(metrics.burnRate)} />
+        <Tile label="Tech debt" tip="0–100 · higher = more/worse random events" value={`${Math.round(metrics.technicalDebt)}`} />
+        <Tile label="Quality" tip="0–100 · higher speeds customer growth" value={`${Math.round(metrics.productQuality)}`} />
+        <Tile label="Innovation" tip="Features shipped" value={formatNumber(metrics.innovation)} />
+        <Tile label="Team" tip="Headcount, including you" value={formatNumber(metrics.teamSize)} />
+        <Tile label="Your equity" tip="Your ownership · drops when you raise" value={`${metrics.founderOwnershipPct.toFixed(1)}%`} />
+      </div>
     </div>
   );
 }

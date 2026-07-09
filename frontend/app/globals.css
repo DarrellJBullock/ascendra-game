@@ -345,3 +345,61 @@ body, .card, .btn, .chip, .field, .pill {
   body, .card, .btn, .chip, .field, .pill { transition: none; }
   .toast-in, .toast-out, .shine, .choice-in, .confetti-piece { animation: none; }
 }
+
+/* --- Command-center tool buttons (Phase 4 UI) -------------------------- */
+.tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 10px;
+  padding: 0.42rem 0.7rem;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease, transform 0.08s ease;
+}
+.tool-btn:hover {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--border);
+}
+.tool-btn:active { transform: translateY(1px); }
+
+/* --- CSS tooltips (data-tip) ------------------------------------------- */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  background: var(--ink);
+  color: var(--surface);
+  padding: 5px 9px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  max-width: 220px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 60;
+  box-shadow: var(--shadow-lg);
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+[data-tip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+@media (hover: none) {
+  [data-tip]::after { display: none; } /* no hover tooltips on touch */
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-tip]::after { transition: opacity 0.14s ease; transform: translateX(-50%); }
+}

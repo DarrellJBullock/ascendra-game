@@ -30,7 +30,7 @@ export default function SalesPipelineButton() {
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="btn btn-ghost px-3 py-2 text-xs" title="Sales pipeline & forecast">
+      <button type="button" onClick={() => setOpen(true)} className="tool-btn" data-tip="Sales pipeline & forecast">
         🧭 Pipeline
       </button>
 

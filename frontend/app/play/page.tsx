@@ -175,13 +175,16 @@ export default function PlayPage() {
 
         <ExitsBanner />
 
-        <div className="flex flex-wrap justify-end gap-2">
-          <BoardButton />
-          <AdvisorButton />
-          <NewsButton />
-          <CompetitorsButton />
-          <SalesPipelineButton />
-          <FinancialsButton />
+        <div className="card flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+          <span className="eyebrow pl-1">Command center</span>
+          <div className="flex flex-wrap items-center gap-0.5">
+            <AdvisorButton />
+            <BoardButton />
+            <CompetitorsButton />
+            <NewsButton />
+            <SalesPipelineButton />
+            <FinancialsButton />
+          </div>
         </div>
 
         <MetricsPanel metrics={state.metrics} previous={previous} />
